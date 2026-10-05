@@ -1,0 +1,29 @@
+{
+  "name": "job-application-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo for the Job Application Tracker (React frontend + Express API)",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c blue,magenta \"npm:dev -w apps/web\" \"npm:dev -w apps/api\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:api": "npm run dev -w apps/api",
+    "build": "npm run build -w apps/web",
+    "build:web": "npm run build -w apps/web",
+    "build:api": "npm run build -w apps/api",
+    "test": "npm run test -w apps/web && npm run test -w apps/api",
+    "test:web": "npm run test -w apps/web",
+    "lint": "npm run lint -w apps/web && npm run lint -w apps/api",
+    "lint:web": "npm run lint -w apps/web",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,103 @@
+// Job Application Tracker — database schema (from the PRD).
+// MySQL via Prisma ORM.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStatus {
+  WISHLIST
+  APPLIED
+  ASSESSMENT
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  companies    Company[]
+  applications Application[]
+
+  @@map("users")
+}
+
+model Company {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  name         String
+  website      String?
+  industry     String?
+  notes        String?       @db.Text
+  createdAt    DateTime      @default(now())
+  applications Application[]
+
+  @@index([userId])
+  @@map("companies")
+}
+
+model Application {
+  id             String            @id @default(uuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  companyId      String
+  company        Company           @relation(fields: [companyId], references: [id])
+  roleTitle      String
+  jobDescription String            @db.Text
+  postingUrl     String?
+  location       String?
+  isRemote       Boolean           @default(false)
+  salaryRange    String?
+  resumeVersion  String?
+  currentStatus  ApplicationStatus @default(APPLIED)
+  appliedAt      DateTime          @default(now())
+  createdAt      DateTime          @default(now())
+  statusHistory  StatusHistory[]
+  tags           ApplicationTag[]
+
+  @@index([userId])
+  @@index([companyId])
+  @@map("applications")
+}
+
+model StatusHistory {
+  id            String            @id @default(uuid())
+  applicationId String
+  application   Application       @relation(fields: [applicationId], references: [id])
+  status        ApplicationStatus
+  note          String?
+  changedAt     DateTime          @default(now())
+
+  @@index([applicationId])
+  @@map("status_history")
+}
+
+model Tag {
+  id           String           @id @default(uuid())
+  userId       String
+  name         String
+  applications ApplicationTag[]
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+model ApplicationTag {
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id])
+  tagId         String
+  tag           Tag         @relation(fields: [tagId], references: [id])
+
+  @@id([applicationId, tagId])
+  @@map("application_tags")
+}
