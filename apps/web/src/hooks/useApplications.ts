@@ -52,6 +52,8 @@ export function useCreateApplication() {
       void queryClient.invalidateQueries({ queryKey: ['applications'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       void queryClient.invalidateQueries({ queryKey: ['companies'] });
+      // Creating an application can introduce brand-new tags.
+      void queryClient.invalidateQueries({ queryKey: ['tags'] });
     },
   });
 }
@@ -67,6 +69,8 @@ export function useUpdateApplication() {
       void queryClient.invalidateQueries({ queryKey: ['application', variables.id] });
       void queryClient.invalidateQueries({ queryKey: ['applications'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Editing tags changes which tags exist and how they are used.
+      void queryClient.invalidateQueries({ queryKey: ['tags'] });
     },
   });
 }
