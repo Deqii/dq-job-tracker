@@ -46,7 +46,7 @@ export async function getDashboard(userId: string): Promise<DashboardDto> {
   const recent = await prisma.application.findMany({
     where: { userId },
     include: applicationInclude,
-    orderBy: { appliedAt: 'desc' },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: 6,
   });
 
