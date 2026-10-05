@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -191,21 +191,46 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/job description/i), 'We are hiring a staff engineer.');
 }
 
+async function addTag(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const tagInput = screen.getByLabelText('Add tag');
+  await user.type(tagInput, `${name}{Enter}`);
+  await waitFor(() => expect(screen.getByRole('button', { name: `Remove tag ${name}` })).toBeInTheDocument());
+}
+
+/** Every per-application field, so a reset or a failure can be checked in full. */
+async function fillEveryField(user: ReturnType<typeof userEvent.setup>) {
+  await fillRequiredFields(user);
+
+  await user.type(screen.getByLabelText(/posting url/i), 'https://globex.example/job/1');
+  await user.type(screen.getByLabelText(/location/i), 'Jakarta');
+  await user.type(screen.getByLabelText(/salary range/i), 'Rp 8-12 juta');
+  await user.click(screen.getByLabelText(/this role is remote/i));
+  await addTag(user, 'referral');
+}
+
 describe('ApplicationFormPage quick add', () => {
+  // Stands in for the server: a company created inline shows up in the list on
+  // the next fetch, which is what the invalidation triggers.
+  let serverCompanies: Company[];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    serverCompanies = [...companies];
     // The hooks read `data` off the axios response, so the mock must return the
     // full response shape rather than the payload on its own.
     getMock.mockImplementation(async (url: string) => {
-      const data = url === '/api/companies' ? companies : [];
+      const data = url === '/api/companies' ? serverCompanies : [];
       return { data } as never;
     });
     postMock.mockImplementation(async (url: string) => {
-      const data =
-        url === '/api/companies'
-          ? { ...companies[2]!, name: 'Initech' }
-          : { id: 'app-1', roleTitle: 'Staff Engineer', companyId: 'co-globex' };
-      return { data } as never;
+      if (url === '/api/companies') {
+        const created: Company = { ...companies[2]!, id: 'co-initech', name: 'Initech' };
+        serverCompanies = [...serverCompanies, created];
+        return { data: created } as never;
+      }
+      return {
+        data: { id: 'app-1', roleTitle: 'Staff Engineer', companyId: 'co-globex' },
+      } as never;
     });
   });
 
@@ -214,14 +239,9 @@ describe('ApplicationFormPage quick add', () => {
     renderFormPage();
 
     await screen.findByRole('combobox', { name: 'Company' });
-    await fillRequiredFields(user);
+    await fillEveryField(user);
 
-    await user.type(screen.getByLabelText(/location/i), 'Jakarta');
-    await user.type(screen.getByLabelText(/salary range/i), 'Rp 8-12 juta');
-    await user.type(screen.getByLabelText(/posting url/i), 'https://globex.example/job/1');
     await user.type(screen.getByLabelText(/resume version/i), 'resume-2026-v2.pdf');
-    await user.click(screen.getByLabelText(/this role is remote/i));
-
     await user.selectOptions(screen.getByLabelText(/initial status/i), ApplicationStatus.ASSESSMENT);
     const appliedDate = screen.getByLabelText(/applied date/i) as HTMLInputElement;
     await user.clear(appliedDate);
@@ -235,10 +255,11 @@ describe('ApplicationFormPage quick add', () => {
     expect(screen.getByRole('combobox', { name: 'Company' })).toHaveValue('');
     expect(screen.getByLabelText(/role title/i)).toHaveValue('');
     expect(screen.getByLabelText(/job description/i)).toHaveValue('');
+    expect(screen.getByLabelText(/posting url/i)).toHaveValue('');
     expect(screen.getByLabelText(/location/i)).toHaveValue('');
     expect(screen.getByLabelText(/salary range/i)).toHaveValue('');
-    expect(screen.getByLabelText(/posting url/i)).toHaveValue('');
     expect(screen.getByLabelText(/this role is remote/i)).not.toBeChecked();
+    expect(screen.queryByRole('button', { name: 'Remove tag referral' })).not.toBeInTheDocument();
 
     // Kept
     expect(screen.getByLabelText(/initial status/i)).toHaveValue(ApplicationStatus.ASSESSMENT);
@@ -275,7 +296,7 @@ describe('ApplicationFormPage quick add', () => {
     await screen.findByText('application detail');
   });
 
-  it('creates a company inline and selects it', async () => {
+  it('creates a company inline, selects it and refreshes the company list', async () => {
     const user = userEvent.setup();
     renderFormPage();
 
@@ -288,24 +309,88 @@ describe('ApplicationFormPage quick add', () => {
       expect(postMock).toHaveBeenCalledWith('/api/companies', { name: 'Initech' }),
     );
     await waitFor(() => expect(company).toHaveValue('Initech'));
+
+    // The company was POSTed, not matched against the seeded list, and the list
+    // query was invalidated so a re-read picks the new company up as an existing
+    // option instead of still offering to create it.
+    expect(serverCompanies.map((entry) => entry.name)).toContain('Initech');
+    await waitFor(() =>
+      expect(
+        getMock.mock.calls.filter(([url]) => url === '/api/companies').length,
+      ).toBeGreaterThan(1),
+    );
+
+    await user.clear(company);
+    await user.type(company, 'Initech');
+    expect(screen.getByRole('option', { name: 'Initech' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^Create/ })).not.toBeInTheDocument();
   });
 
-  it('keeps the form filled in when the save fails', async () => {
+  it('keeps every field and re-enables the buttons when the save fails', async () => {
     const user = userEvent.setup();
     postMock.mockRejectedValueOnce(new Error('boom'));
 
     renderFormPage();
     await screen.findByRole('combobox', { name: 'Company' });
-    await fillRequiredFields(user);
+    await fillEveryField(user);
+    await user.type(screen.getByLabelText(/resume version/i), 'resume-2026-v2.pdf');
+    await user.selectOptions(screen.getByLabelText(/initial status/i), ApplicationStatus.INTERVIEW);
 
-    await user.click(screen.getByRole('button', { name: /save & add another/i }));
+    const saveAndAddAnother = screen.getByRole('button', { name: /save & add another/i });
+    await user.click(saveAndAddAnother);
 
     await screen.findByRole('alert');
+
+    expect(screen.getByRole('combobox', { name: 'Company' })).toHaveValue('Globex');
     expect(screen.getByLabelText(/role title/i)).toHaveValue('Staff Engineer');
     expect(screen.getByLabelText(/job description/i)).toHaveValue(
       'We are hiring a staff engineer.',
     );
-    expect(screen.getByRole('combobox', { name: 'Company' })).toHaveValue('Globex');
+    expect(screen.getByLabelText(/posting url/i)).toHaveValue('https://globex.example/job/1');
+    expect(screen.getByLabelText(/location/i)).toHaveValue('Jakarta');
+    expect(screen.getByLabelText(/salary range/i)).toHaveValue('Rp 8-12 juta');
+    expect(screen.getByLabelText(/resume version/i)).toHaveValue('resume-2026-v2.pdf');
+    expect(screen.getByLabelText(/this role is remote/i)).toBeChecked();
+    expect(screen.getByLabelText(/initial status/i)).toHaveValue(ApplicationStatus.INTERVIEW);
+    expect(screen.getByRole('button', { name: 'Remove tag referral' })).toBeInTheDocument();
+
+    // Usable again for a retry.
+    expect(saveAndAddAnother).toBeEnabled();
+    expect(screen.getByRole('button', { name: /save application/i })).toBeEnabled();
+  });
+
+  it('disables both save buttons while the save is in flight', async () => {
+    const user = userEvent.setup();
+    let releaseSave: (() => void) | undefined;
+    postMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseSave = () =>
+            resolve({ data: { id: 'app-1', roleTitle: 'Staff Engineer', companyId: 'co-globex' } });
+        }),
+    );
+
+    renderFormPage();
+    await screen.findByRole('combobox', { name: 'Company' });
+    await fillRequiredFields(user);
+
+    const saveAndAddAnother = screen.getByRole('button', { name: /save & add another/i });
+    const saveApplication = screen.getByRole('button', { name: /save application/i });
+
+    await user.click(saveAndAddAnother);
+
+    await waitFor(() => {
+      expect(saveAndAddAnother).toBeDisabled();
+      expect(saveApplication).toBeDisabled();
+    });
+
+    await act(async () => {
+      releaseSave?.();
+    });
+
+    await screen.findByRole('status');
+    expect(saveAndAddAnother).toBeEnabled();
+    expect(saveApplication).toBeEnabled();
   });
 
   it('still requires a company', async () => {

@@ -161,6 +161,7 @@ export function ApplicationFormPage() {
       if (mode === 'saveAndAddAnother') {
         setSuccessMessage(`Saved "${created.roleTitle}". Ready for the next one.`);
         setValues(valuesForNextEntry(parsed.data));
+        setSubmitting(false);
         // The combobox mirrors the selection in its own input state, so remount
         // it to clear the visible text, then return focus to the first field.
         setComboboxKey((previous) => previous + 1);
