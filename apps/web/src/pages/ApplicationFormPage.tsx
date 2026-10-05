@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import type { FormEvent } from 'react';
 
+import { CompanyCombobox } from '../components/CompanyCombobox';
 import { ErrorMessage, InlineError } from '../components/ErrorMessage';
-import { FormSection } from '../components/Select';
-import { NativeSelect } from '../components/Select';
+import { FormSection, NativeSelect } from '../components/Select';
+import { IconArrowLeft } from '../components/Icons';
 import { PageHeader } from '../components/PageHeader';
-import { PageLoader } from '../components/Spinner';
-import { Spinner } from '../components/Spinner';
+import { PageLoader, Spinner } from '../components/Spinner';
 import { TagInput } from '../components/TagInput';
 import { useApplication, useCreateApplication, useUpdateApplication } from '../hooks/useApplications';
 import { useCompanies, useCreateCompany } from '../hooks/useCompanies';
@@ -16,13 +15,11 @@ import { STATUS_LABELS, STATUS_ORDER, toISODateInput } from '../lib/utils';
 import { applicationSchema, emptyToUndefined } from '../schemas';
 import type { ApplicationFormValues } from '../schemas';
 import { ApplicationStatus } from '../types';
-import { IconArrowLeft } from '../components/Icons';
+import type { Company } from '../types';
 
 function defaultValues(): ApplicationFormValues {
   return {
-    companyMode: 'existing',
     companyId: '',
-    newCompanyName: '',
     roleTitle: '',
     jobDescription: '',
     postingUrl: '',
@@ -35,6 +32,27 @@ function defaultValues(): ApplicationFormValues {
     tags: [],
   };
 }
+
+/**
+ * After a successful "Save & add another", the per-application fields are
+ * cleared while the fields that usually stay identical across a batch
+ * (initial status, applied date, resume version) are kept.
+ */
+function valuesForNextEntry(previous: ApplicationFormValues): ApplicationFormValues {
+  return {
+    ...previous,
+    companyId: '',
+    roleTitle: '',
+    jobDescription: '',
+    postingUrl: '',
+    location: '',
+    isRemote: false,
+    salaryRange: '',
+    tags: [],
+  };
+}
+
+type SubmitMode = 'save' | 'saveAndAddAnother';
 
 export function ApplicationFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,16 +70,19 @@ export function ApplicationFormPage() {
   const [values, setValues] = useState<ApplicationFormValues>(defaultValues);
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormValues, string>>>({});
   const [formError, setFormError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [comboboxKey, setComboboxKey] = useState(0);
+
+  const companyInputRef = useRef<HTMLInputElement>(null);
+  const companyInputWrapRef = useRef<HTMLDivElement>(null);
 
   const editingApp = applicationQuery.data;
 
   useEffect(() => {
     if (!editingApp) return;
     setValues({
-      companyMode: 'existing',
       companyId: editingApp.companyId,
-      newCompanyName: '',
       roleTitle: editingApp.roleTitle,
       jobDescription: editingApp.jobDescription,
       postingUrl: editingApp.postingUrl ?? '',
@@ -78,33 +99,25 @@ export function ApplicationFormPage() {
   useEffect(() => {
     if (isEdit || !presetCompanyId || values.companyId) return;
     if (companies.some((company) => company.id === presetCompanyId)) {
-      setValues((prev) => ({ ...prev, companyId: presetCompanyId, companyMode: 'existing' }));
+      setValues((prev) => ({ ...prev, companyId: presetCompanyId }));
     }
   }, [isEdit, presetCompanyId, companies, values.companyId]);
-
-  const companyOptions = useMemo(
-    () =>
-      companies
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((company) => ({ value: company.id, label: company.name })),
-    [companies],
-  );
 
   const setField = <K extends keyof ApplicationFormValues>(key: K, value: ApplicationFormValues[K]) => {
     setValues((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setFormError('');
+  const handleCreateCompany = async (name: string): Promise<Company> => {
+    const created = await createCompany.mutateAsync({ name });
+    return created;
+  };
 
-    const payload: ApplicationFormValues = { ...values };
-    if (payload.companyMode === 'new') {
-      payload.companyId = undefined;
-    }
-    const parsed = applicationSchema.safeParse(payload);
+  const submit = async (mode: SubmitMode) => {
+    setFormError('');
+    setSuccessMessage('');
+
+    const parsed = applicationSchema.safeParse(values);
     if (!parsed.success) {
       const next: Partial<Record<keyof ApplicationFormValues, string>> = {};
       for (const issue of parsed.error.issues) {
@@ -112,20 +125,16 @@ export function ApplicationFormPage() {
         if (key && !next[key]) next[key] = issue.message;
       }
       setErrors(next);
+      // Keep focus on the first thing that needs fixing.
+      if (next.companyId) companyInputWrapRef.current?.scrollIntoView({ block: 'center' });
       return;
     }
 
     setSubmitting(true);
     setErrors({});
     try {
-      let resolvedCompanyId = parsed.data.companyId;
-      if (parsed.data.companyMode === 'new' && parsed.data.newCompanyName) {
-        const company = await createCompany.mutateAsync({ name: parsed.data.newCompanyName });
-        resolvedCompanyId = company.id;
-      }
-
       const commonDetails = {
-        companyId: resolvedCompanyId,
+        companyId: parsed.data.companyId,
         roleTitle: parsed.data.roleTitle,
         postingUrl: emptyToUndefined(parsed.data.postingUrl),
         location: emptyToUndefined(parsed.data.location),
@@ -143,19 +152,25 @@ export function ApplicationFormPage() {
         return;
       }
 
-      if (!resolvedCompanyId) {
-        setFormError('Select a company before saving.');
-        setSubmitting(false);
-        return;
-      }
-
       const created = await createApplication.mutateAsync({
         ...commonDetails,
-        companyId: resolvedCompanyId,
-        newCompanyName: undefined,
         jobDescription: parsed.data.jobDescription,
         currentStatus: parsed.data.currentStatus,
       });
+
+      if (mode === 'saveAndAddAnother') {
+        setSuccessMessage(`Saved "${created.roleTitle}". Ready for the next one.`);
+        setValues(valuesForNextEntry(parsed.data));
+        // The combobox mirrors the selection in its own input state, so remount
+        // it to clear the visible text, then return focus to the first field.
+        setComboboxKey((previous) => previous + 1);
+        companyInputWrapRef.current?.scrollIntoView({ block: 'center' });
+        window.setTimeout(() => {
+          companyInputRef.current?.focus();
+        }, 0);
+        return;
+      }
+
       navigate(`/applications/${created.id}`, { replace: true });
     } catch (err) {
       setFormError(getErrorMessage(err));
@@ -169,6 +184,8 @@ export function ApplicationFormPage() {
       <ErrorMessage message={`Could not load this application: ${getErrorMessage(applicationQuery.error)}`} />
     );
   }
+
+  const busy = submitting;
 
   return (
     <div>
@@ -189,72 +206,30 @@ export function ApplicationFormPage() {
         }
       />
 
-      <form onSubmit={(event) => void handleSubmit(event)} className="space-y-6" noValidate>
+      <form
+        className="space-y-6"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit('save');
+        }}
+      >
         <div className="card space-y-5 p-5 sm:p-6">
           <FormSection title="Company">
             {companiesError ? (
               <ErrorMessage message="Could not load your companies. Please try again." />
             ) : null}
-            <div className="space-y-4">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="radio"
-                  name="companyMode"
-                  className="h-4 w-4 accent-brand-600"
-                  checked={values.companyMode === 'existing'}
-                  onChange={() => setField('companyMode', 'existing')}
-                />
-                Use an existing company
-              </label>
-              {values.companyMode === 'existing' ? (
-                <div>
-                  <select
-                    name="companyId"
-                    className="input"
-                    value={values.companyId ?? ''}
-                    onChange={(event) =>
-                      setField('companyId', event.target.value === '' ? '' : event.target.value)
-                    }
-                    aria-label="Company"
-                  >
-                    <option value="">Select a company…</option>
-                    {companyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.companyId ? <InlineError message={errors.companyId} /> : null}
-                  {!isEdit ? (
-                    <p className="mt-2 text-xs text-slate-500">
-                      None of these fit? Choose “Add a new company” below.
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="radio"
-                  name="companyMode"
-                  className="h-4 w-4 accent-brand-600"
-                  checked={values.companyMode === 'new'}
-                  onChange={() => setField('companyMode', 'new')}
-                />
-                Add a new company
-              </label>
-              {values.companyMode === 'new' ? (
-                <div>
-                  <input
-                    className="input"
-                    value={values.newCompanyName ?? ''}
-                    onChange={(event) => setField('newCompanyName', event.target.value)}
-                    placeholder="Company name"
-                    aria-label="New company name"
-                  />
-                  {errors.newCompanyName ? <InlineError message={errors.newCompanyName} /> : null}
-                </div>
-              ) : null}
+            <div ref={companyInputWrapRef}>
+              <CompanyCombobox
+                key={comboboxKey}
+                companies={companies}
+                value={values.companyId}
+                onChange={(companyId) => setField('companyId', companyId)}
+                onCreateCompany={handleCreateCompany}
+                errorMessage={errors.companyId}
+                disabled={busy}
+                inputRef={companyInputRef}
+              />
             </div>
           </FormSection>
 
@@ -325,7 +300,7 @@ export function ApplicationFormPage() {
                   className="input"
                   value={values.location ?? ''}
                   onChange={(event) => setField('location', event.target.value)}
-                  placeholder="e.g. London, UK"
+                  placeholder="e.g. Jakarta"
                 />
                 {errors.location ? <InlineError message={errors.location} /> : null}
               </div>
@@ -338,7 +313,7 @@ export function ApplicationFormPage() {
                   className="input"
                   value={values.salaryRange ?? ''}
                   onChange={(event) => setField('salaryRange', event.target.value)}
-                  placeholder="e.g. £70k–£90k"
+                  placeholder="e.g. Rp 8–12 juta"
                 />
                 {errors.salaryRange ? <InlineError message={errors.salaryRange} /> : null}
               </div>
@@ -410,22 +385,43 @@ export function ApplicationFormPage() {
         </div>
 
         <ErrorMessage message={formError} />
+        {successMessage ? (
+          <p
+            role="status"
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700"
+          >
+            {successMessage}
+          </p>
+        ) : null}
 
-        <div className="flex justify-end gap-2">
-          <Link
-            to={isEdit && id ? `/applications/${id}` : '/applications'}
-            className="btn btn-secondary btn-md"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            className="btn btn-primary btn-md"
-            disabled={submitting || (isEdit ? false : companiesError)}
-          >
-            {submitting ? <Spinner className="h-4 w-4" /> : null}
-            {isEdit ? 'Save changes' : 'Save application'}
-          </button>
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              to={isEdit && id ? `/applications/${id}` : '/applications'}
+              className="btn btn-secondary btn-md"
+            >
+              Cancel
+            </Link>
+            {!isEdit ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-md"
+                disabled={busy || companiesError}
+                onClick={() => void submit('saveAndAddAnother')}
+              >
+                {busy ? <Spinner className="h-4 w-4" /> : null}
+                Save &amp; add another
+              </button>
+            ) : null}
+            <button
+              type="submit"
+              className="btn btn-primary btn-md"
+              disabled={busy || (isEdit ? false : companiesError)}
+            >
+              {busy ? <Spinner className="h-4 w-4" /> : null}
+              {isEdit ? 'Save changes' : 'Save application'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
