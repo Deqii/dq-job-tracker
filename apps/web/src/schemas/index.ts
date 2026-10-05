@@ -25,41 +25,22 @@ export const companySchema = z.object({
   notes: z.string().max(10_000).optional().or(z.literal('')),
 });
 
-export const applicationSchema = z
-  .object({
-    companyMode: z.enum(['existing', 'new']),
-    companyId: z.string().optional(),
-    newCompanyName: z.string().max(200).optional(),
-    roleTitle: z.string().min(1, 'Role title is required').max(300, 'Keep it under 300 characters'),
-    jobDescription: z
-      .string()
-      .min(10, 'Paste at least 10 characters of the job description')
-      .max(200_000, 'Job description is too long — keep it under 200,000 characters'),
-    postingUrl: z.string().url('Enter a valid URL').or(z.literal('')).optional(),
-    location: z.string().max(200).optional().or(z.literal('')),
-    isRemote: z.boolean(),
-    salaryRange: z.string().max(100).optional().or(z.literal('')),
-    resumeVersion: z.string().max(200).optional().or(z.literal('')),
-    currentStatus: z.nativeEnum(ApplicationStatus),
-    appliedAt: z.string().optional().or(z.literal('')),
-    tags: z.array(z.string()).max(30, 'You can add at most 30 tags'),
-  })
-  .superRefine((data, ctx) => {
-    if (data.companyMode === 'existing' && !data.companyId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['companyId'],
-        message: 'Select a company',
-      });
-    }
-    if (data.companyMode === 'new' && !data.newCompanyName?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['newCompanyName'],
-        message: 'Enter the new company name',
-      });
-    }
-  });
+export const applicationSchema = z.object({
+  companyId: z.string().min(1, 'Select a company'),
+  roleTitle: z.string().min(1, 'Role title is required').max(300, 'Keep it under 300 characters'),
+  jobDescription: z
+    .string()
+    .min(10, 'Paste at least 10 characters of the job description')
+    .max(200_000, 'Job description is too long — keep it under 200,000 characters'),
+  postingUrl: z.string().url('Enter a valid URL').or(z.literal('')).optional(),
+  location: z.string().max(200).optional().or(z.literal('')),
+  isRemote: z.boolean(),
+  salaryRange: z.string().max(100).optional().or(z.literal('')),
+  resumeVersion: z.string().max(200).optional().or(z.literal('')),
+  currentStatus: z.nativeEnum(ApplicationStatus),
+  appliedAt: z.string().optional().or(z.literal('')),
+  tags: z.array(z.string()).max(30, 'You can add at most 30 tags'),
+});
 
 export const statusChangeSchema = z.object({
   status: z.nativeEnum(ApplicationStatus),
