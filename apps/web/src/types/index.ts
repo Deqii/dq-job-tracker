@@ -74,6 +74,7 @@ export interface ApplicationInput {
   resumeVersion?: string | null;
   currentStatus: ApplicationStatus;
   appliedAt?: string;
+  tags?: string[];
 }
 
 export interface ApplicationUpdateInput {
@@ -85,6 +86,7 @@ export interface ApplicationUpdateInput {
   resumeVersion?: string | null;
   companyId?: string;
   appliedAt?: string;
+  tags?: string[];
 }
 
 export interface StatusChangeInput {

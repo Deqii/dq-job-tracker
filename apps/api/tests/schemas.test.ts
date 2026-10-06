@@ -58,6 +58,47 @@ describe('applicationCreateSchema', () => {
     expect(new Set(input.tags)).toEqual(new Set(['Remote', 'remote', 'React']));
   });
 
+  it('defaults tags to an empty list so creating without tags stays valid', () => {
+    const input = validateBody(applicationCreateSchema, {
+      companyId: 'c1',
+      roleTitle: 'Engineer',
+      jobDescription: 'Full JD',
+    });
+    expect(input.tags).toEqual([]);
+  });
+
+  it('trims each tag name but keeps casing so the service can normalize', () => {
+    const input = validateBody(applicationCreateSchema, {
+      companyId: 'c1',
+      roleTitle: 'Engineer',
+      jobDescription: 'Full JD',
+      tags: ['  Remote  ', 'Reactive'],
+    });
+    expect(input.tags).toEqual(['Remote', 'Reactive']);
+  });
+
+  it('rejects a blank tag name and an over-long one', () => {
+    const base = { companyId: 'c1', roleTitle: 'Engineer', jobDescription: 'Full JD' };
+    expect(() => validateBody(applicationCreateSchema, { ...base, tags: ['  '] })).toThrow(
+      'Validation failed',
+    );
+    expect(() => validateBody(applicationCreateSchema, { ...base, tags: ['x'.repeat(51)] })).toThrow(
+      'Validation failed',
+    );
+  });
+
+  it('rejects more than 30 tags', () => {
+    const tags = Array.from({ length: 31 }, (_, i) => `tag-${i}`);
+    expect(() =>
+      validateBody(applicationCreateSchema, {
+        companyId: 'c1',
+        roleTitle: 'Engineer',
+        jobDescription: 'Full JD',
+        tags,
+      }),
+    ).toThrow('Validation failed');
+  });
+
   it('rejects a missing jobDescription', () => {
     expect(() =>
       validateBody(applicationCreateSchema, { companyId: 'c1', roleTitle: 'Engineer' }),
@@ -91,6 +132,30 @@ describe('applicationUpdateSchema', () => {
   it('accepts tag replacement', () => {
     const result = applicationUpdateSchema.safeParse({ tags: ['new', 'tags'] });
     expect(result.success).toBe(true);
+  });
+
+  it('leaves tags undefined when omitted so an update never wipes them', () => {
+    // The service only replaces the tag set when tags is present, so an update
+    // that does not mention tags must leave the existing links untouched.
+    const result = applicationUpdateSchema.safeParse({ postingUrl: 'https://example.com/1' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tags).toBeUndefined();
+    }
+  });
+
+  it('accepts an explicitly empty tag list to clear every tag', () => {
+    const result = applicationUpdateSchema.safeParse({ tags: [] });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tags).toEqual([]);
+    }
+  });
+
+  it('rejects a blank tag name and more than 30 tags', () => {
+    expect(applicationUpdateSchema.safeParse({ tags: ['  '] }).success).toBe(false);
+    const tags = Array.from({ length: 31 }, (_, i) => `tag-${i}`);
+    expect(applicationUpdateSchema.safeParse({ tags }).success).toBe(false);
   });
 });
 

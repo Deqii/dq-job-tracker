@@ -51,6 +51,7 @@ const companies: Company[] = [
 
 const getMock = vi.mocked(api.get);
 const postMock = vi.mocked(api.post);
+const patchMock = vi.mocked(api.patch);
 
 function renderCombobox(props: Partial<React.ComponentProps<typeof CompanyCombobox>> = {}) {
   const onChange = vi.fn();
@@ -163,16 +164,17 @@ describe('CompanyCombobox', () => {
   });
 });
 
-function renderFormPage() {
+function renderFormPage(initialEntry = '/applications/new') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/applications/new']}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/applications/new" element={<ApplicationFormPage />} />
+          <Route path="/applications/:id/edit" element={<ApplicationFormPage />} />
           <Route path="/applications/:id" element={<div>application detail</div>} />
           <Route path="/applications" element={<div>applications list</div>} />
         </Routes>
@@ -194,7 +196,9 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
 async function addTag(user: ReturnType<typeof userEvent.setup>, name: string) {
   const tagInput = screen.getByLabelText('Add tag');
   await user.type(tagInput, `${name}{Enter}`);
-  await waitFor(() => expect(screen.getByRole('button', { name: `Remove tag ${name}` })).toBeInTheDocument());
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: `Remove tag ${name}` })).toBeInTheDocument(),
+  );
 }
 
 /** Every per-application field, so a reset or a failure can be checked in full. */
@@ -206,6 +210,17 @@ async function fillEveryField(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/salary range/i), 'Rp 8-12 juta');
   await user.click(screen.getByLabelText(/this role is remote/i));
   await addTag(user, 'referral');
+}
+
+/** The payload the form hands to the API, as the user would see it round-trip. */
+function createPayload() {
+  const call = postMock.mock.calls.find(([url]) => url === '/api/applications');
+  return call?.[1] as { tags?: string[] } | undefined;
+}
+
+function updatePayload() {
+  const call = patchMock.mock.calls.find(([url]) => url === '/api/applications/app-1');
+  return call?.[1] as { tags?: string[] } | undefined;
 }
 
 describe('ApplicationFormPage quick add', () => {
@@ -242,7 +257,10 @@ describe('ApplicationFormPage quick add', () => {
     await fillEveryField(user);
 
     await user.type(screen.getByLabelText(/resume version/i), 'resume-2026-v2.pdf');
-    await user.selectOptions(screen.getByLabelText(/initial status/i), ApplicationStatus.ASSESSMENT);
+    await user.selectOptions(
+      screen.getByLabelText(/initial status/i),
+      ApplicationStatus.ASSESSMENT,
+    );
     const appliedDate = screen.getByLabelText(/applied date/i) as HTMLInputElement;
     await user.clear(appliedDate);
     await user.type(appliedDate, '2026-09-29');
@@ -315,9 +333,9 @@ describe('ApplicationFormPage quick add', () => {
     // option instead of still offering to create it.
     expect(serverCompanies.map((entry) => entry.name)).toContain('Initech');
     await waitFor(() =>
-      expect(
-        getMock.mock.calls.filter(([url]) => url === '/api/companies').length,
-      ).toBeGreaterThan(1),
+      expect(getMock.mock.calls.filter(([url]) => url === '/api/companies').length).toBeGreaterThan(
+        1,
+      ),
     );
 
     await user.clear(company);
@@ -405,5 +423,129 @@ describe('ApplicationFormPage quick add', () => {
 
     expect(await screen.findByText('Select a company')).toBeInTheDocument();
     expect(postMock).not.toHaveBeenCalledWith('/api/applications', expect.anything());
+  });
+
+  it('sends the selected tags on a normal save', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    await screen.findByRole('combobox', { name: 'Company' });
+    await fillRequiredFields(user);
+    await addTag(user, 'referral');
+    await addTag(user, 'priority');
+
+    await user.click(screen.getByRole('button', { name: /save application/i }));
+
+    await screen.findByText('application detail');
+    expect(createPayload()?.tags).toEqual(['referral', 'priority']);
+  });
+
+  it('sends the selected tags on "Save & add another"', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    await screen.findByRole('combobox', { name: 'Company' });
+    await fillRequiredFields(user);
+    await addTag(user, 'referral');
+
+    await user.click(screen.getByRole('button', { name: /save & add another/i }));
+
+    await screen.findByRole('status');
+    expect(createPayload()?.tags).toEqual(['referral']);
+  });
+
+  it('refreshes the tag list after creating an application', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    await screen.findByRole('combobox', { name: 'Company' });
+    await fillRequiredFields(user);
+    await addTag(user, 'brand-new-tag');
+
+    const tagsFetchesBefore = getMock.mock.calls.filter(([url]) => url === '/api/tags').length;
+    expect(tagsFetchesBefore).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: /save application/i }));
+
+    await screen.findByText('application detail');
+    await waitFor(() =>
+      expect(getMock.mock.calls.filter(([url]) => url === '/api/tags').length).toBeGreaterThan(
+        tagsFetchesBefore,
+      ),
+    );
+  });
+});
+
+describe('ApplicationFormPage edit', () => {
+  const existingApplication = {
+    id: 'app-1',
+    userId: 'user-1',
+    companyId: 'co-globex',
+    roleTitle: 'Staff Engineer',
+    jobDescription: 'Original JD snapshot',
+    postingUrl: null,
+    location: null,
+    isRemote: false,
+    salaryRange: null,
+    resumeVersion: null,
+    currentStatus: ApplicationStatus.APPLIED,
+    appliedAt: '2026-09-29T00:00:00.000Z',
+    createdAt: '2026-09-29T00:00:00.000Z',
+    company: { id: 'co-globex', name: 'Globex' },
+    tags: [
+      { id: 'tag-1', name: 'referral' },
+      { id: 'tag-2', name: 'priority' },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getMock.mockImplementation(async (url: string) => {
+      if (url === '/api/companies') return { data: companies } as never;
+      if (url === '/api/applications/app-1') return { data: existingApplication } as never;
+      return { data: [] } as never;
+    });
+    patchMock.mockImplementation(async () => ({ data: existingApplication }) as never);
+  });
+
+  it('shows the tags already attached to the application', async () => {
+    const user = userEvent.setup();
+    renderFormPage('/applications/app-1/edit');
+
+    await screen.findByRole('button', { name: 'Remove tag referral' });
+    expect(screen.getByRole('button', { name: 'Remove tag priority' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/role title/i)).toHaveValue('Staff Engineer');
+    await user.clear(screen.getByLabelText(/role title/i));
+  });
+
+  it('keeps the existing tags when the user does not touch them', async () => {
+    const user = userEvent.setup();
+    renderFormPage('/applications/app-1/edit');
+
+    await screen.findByRole('button', { name: 'Remove tag referral' });
+
+    const roleTitle = screen.getByLabelText(/role title/i);
+    await user.clear(roleTitle);
+    await user.type(roleTitle, 'Senior Staff Engineer');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await screen.findByText('application detail');
+    // The API replaces the whole tag set, so an untouched tag must still be sent.
+    expect(updatePayload()?.tags).toEqual(['referral', 'priority']);
+  });
+
+  it('sends the reduced list after a chip is removed', async () => {
+    const user = userEvent.setup();
+    renderFormPage('/applications/app-1/edit');
+
+    await screen.findByRole('button', { name: 'Remove tag priority' });
+    await user.click(screen.getByRole('button', { name: 'Remove tag priority' }));
+
+    expect(screen.queryByRole('button', { name: 'Remove tag priority' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await screen.findByText('application detail');
+    expect(updatePayload()?.tags).toEqual(['referral']);
   });
 });

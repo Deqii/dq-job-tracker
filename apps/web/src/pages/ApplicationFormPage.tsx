@@ -144,6 +144,10 @@ export function ApplicationFormPage() {
         appliedAt: parsed.data.appliedAt
           ? new Date(`${parsed.data.appliedAt}T00:00:00`).toISOString()
           : undefined,
+        // The API replaces the tag set whenever this field is present, so the
+        // full current selection travels on every save. The edit form seeds it
+        // from the loaded application, which keeps untouched tags intact.
+        tags: parsed.data.tags,
       };
 
       if (isEdit && id) {
