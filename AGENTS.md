@@ -1,6 +1,6 @@
 ## Project
 
-Job Application Tracker — a personal tool for logging companies, roles, and full job-description snapshots for every job application, with status tracked through a timestamped history. Full product requirements live in `job-application-tracker-prd.md` (commit it into the repo, e.g. under `docs/`).
+Job Application Tracker — a personal tool for logging companies, roles, and full job-description snapshots for every job application, with status tracked through a timestamped history. Full product requirements live in `PRD.md`
 
 ## Repo layout (monorepo)
 
@@ -50,6 +50,13 @@ Job Application Tracker — a personal tool for logging companies, roles, and fu
 - Validate every incoming request with Zod at the route boundary, before it reaches Prisma.
 - Keep Prisma calls inside a `services/` (or `repositories/`) layer in `apps/api`; route handlers stay thin and only orchestrate.
 - ESLint + Prettier; fix lint errors before committing rather than suppressing them.
+
+## Temporary and debug files
+
+- Never write outside the repo: no `/tmp`, no `AppData\Local\Temp`. On this Windows setup `/tmp` resolves to the user's Temp folder and triggers a permission prompt.
+- Scratch files that are not tests go in `.tmp/` at the repo root (gitignored).
+- Debug tests go directly next to the real tests (e.g. `apps/web/src/test/`), named `*.debug.test.ts(x)` (gitignored). Delete them before finishing the task.
+- When running a single test, run it from the workspace (`npm run test -w apps/web -- <file>`) and show the full unfiltered output first. Only filter output after you've seen why it fails.
 
 ## Domain rules agents must not violate
 
