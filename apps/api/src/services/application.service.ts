@@ -212,8 +212,8 @@ export async function changeStatus(
     throw notFound('Application not found');
   }
 
-  const current = app.statusHistory[app.statusHistory.length - 1];
-  if (current && current.status === input.status) {
+  const current = app.currentStatus;
+  if (current === input.status) {
     throw badRequest('The application is already in this status');
   }
 

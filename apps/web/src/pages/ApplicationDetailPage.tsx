@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -20,10 +20,10 @@ import { PageLoader } from '../components/Spinner';
 import { StatusBadge } from '../components/StatusBadge';
 import { StatusSelector } from '../components/StatusSelector';
 import { StatusTimeline } from '../components/StatusTimeline';
-import { useApplication, useDeleteApplication } from '../hooks/useApplications';
+import { useApplication, useDeleteApplication, useUpdateApplication } from '../hooks/useApplications';
 import { getErrorMessage } from '../lib/api';
 import { formatDateTime, formatDate, timeAgo } from '../lib/utils';
-import { TagChip } from '../components/TagChip';
+import { TagInput } from '../components/TagInput';
 
 function InfoRow({
   icon,
@@ -68,7 +68,19 @@ export function ApplicationDetailPage() {
   const navigate = useNavigate();
   const { data: application, isLoading, isError, error } = useApplication(id ?? '');
   const deleteApplication = useDeleteApplication();
+  const updateApplication = useUpdateApplication();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [tagsEdit, setTagsEdit] = useState<string[]>([]);
+  const [isTagsDirty, setIsTagsDirty] = useState(false);
+  const [tagsError, setTagsError] = useState('');
+
+  useEffect(() => {
+    if (application) {
+      setTagsEdit(application.tags?.map((t) => t.name) ?? []);
+      setIsTagsDirty(false);
+      setTagsError('');
+    }
+  }, [application, application?.id]);
 
   if (isLoading) return <PageLoader label="Loading application…" />;
 
@@ -95,6 +107,27 @@ export function ApplicationDetailPage() {
 
   const tags = (application.tags ?? []).map((t) => t.name);
   const history = application.statusHistory ?? [];
+
+  const handleTagsChange = (next: string[]) => {
+    setTagsEdit(next);
+    setIsTagsDirty(JSON.stringify([...next].sort()) !== JSON.stringify([...tags].sort()));
+  };
+
+  const handleSaveTags = async () => {
+    setTagsError('');
+    try {
+      await updateApplication.mutateAsync({ id: application.id, input: { tags: tagsEdit } });
+      setIsTagsDirty(false);
+    } catch (err) {
+      setTagsError(getErrorMessage(err));
+    }
+  };
+
+  const handleCancelTags = () => {
+    setTagsEdit(tags);
+    setIsTagsDirty(false);
+    setTagsError('');
+  };
 
   return (
     <div>
@@ -125,13 +158,28 @@ export function ApplicationDetailPage() {
                 'Company'
               )}
             </p>
-            {tags.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {tags.map((name) => (
-                  <TagChip key={name} name={name} />
-                ))}
+            {tags.length > 0 || isTagsDirty || tagsEdit.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                <TagInput value={tagsEdit} onChange={handleTagsChange} />
+                {isTagsDirty ? (
+                  <div className="flex items-center gap-2">
+                    <button type="button" className="btn btn-primary btn-xs" onClick={handleSaveTags} disabled={updateApplication.isPending}>
+                      Save tags
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-xs" onClick={handleCancelTags} disabled={updateApplication.isPending}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : null}
+                {tagsError ? <ErrorMessage message={tagsError} /> : null}
               </div>
-            ) : null}
+            ) : (
+              <div className="mt-3">
+                <button type="button" className="btn btn-secondary btn-xs" onClick={() => { setTagsEdit([]); setIsTagsDirty(true); }}>
+                  Add tag
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex shrink-0 gap-2">
             <Link to={`/applications/${application.id}/edit`} className="btn btn-secondary btn-sm">
@@ -177,7 +225,7 @@ export function ApplicationDetailPage() {
           <div className="mt-6 border-t border-slate-100 pt-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Status history</h3>
-              {history.length > 0 ? (
+              {history.length > 0 && history[history.length - 1]?.changedAt ? (
                 <span className="text-xs text-slate-400">
                   Last change {timeAgo(history[history.length - 1]?.changedAt ?? '')}
                 </span>
