@@ -64,7 +64,7 @@ export async function listApplications(
   const apps = await prisma.application.findMany({
     where: buildWhereClause(userId, filters),
     include: applicationInclude,
-    orderBy: { appliedAt: 'desc' },
+    orderBy: [{ appliedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
   });
   return apps.map(toDto);
 }

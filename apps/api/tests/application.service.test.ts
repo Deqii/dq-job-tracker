@@ -1,8 +1,12 @@
 import { ApplicationStatus } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const companyFindFirst = vi.fn();
-const applicationCreate = vi.fn();
+const companyFindFirst = vi.hoisted(() => vi.fn());
+const applicationCreate = vi.hoisted(() => vi.fn());
+const applicationFindMany = vi.hoisted(() => vi.fn());
+const applicationFindFirst = vi.hoisted(() => vi.fn());
+const applicationUpdate = vi.hoisted(() => vi.fn());
+const applicationDelete = vi.hoisted(() => vi.fn());
 const applicationTagCreateMany = vi.fn();
 const applicationTagFindMany = vi.fn();
 const statusHistoryCreate = vi.fn();
@@ -17,7 +21,13 @@ let tagSeq = 0;
 
 const tx = {
   company: { findFirst: companyFindFirst },
-  application: { create: applicationCreate },
+  application: {
+    create: applicationCreate,
+    findMany: applicationFindMany,
+    findFirst: applicationFindFirst,
+    update: applicationUpdate,
+    delete: applicationDelete,
+  },
   applicationTag: { createMany: applicationTagCreateMany, findMany: applicationTagFindMany },
   statusHistory: { create: statusHistoryCreate },
   tag: {
@@ -46,10 +56,17 @@ const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) =>
 vi.mock('../src/lib/prisma', () => ({
   prisma: {
     $transaction: (...args: unknown[]) => transaction(...(args as [])),
+    application: {
+      findMany: applicationFindMany,
+      findFirst: applicationFindFirst,
+      create: applicationCreate,
+      update: applicationUpdate,
+      delete: applicationDelete,
+    },
   },
 }));
 
-import { createApplication } from '../src/services/application.service';
+import { createApplication, listApplications } from '../src/services/application.service';
 import type { ApplicationCreateInput } from '../src/schemas';
 
 const USER_ID = 'user-1';
@@ -95,6 +112,10 @@ describe('createApplication tags', () => {
     transactionClients.length = 0;
     companyFindFirst.mockResolvedValue({ id: 'company-1' });
     applicationCreate.mockResolvedValue(createdApplication());
+    applicationFindMany.mockResolvedValue([]);
+    applicationFindFirst.mockResolvedValue(null);
+    applicationUpdate.mockResolvedValue({});
+    applicationDelete.mockResolvedValue({});
     applicationTagCreateMany.mockResolvedValue({ count: 0 });
     statusHistoryCreate.mockResolvedValue({});
     applicationTagFindMany.mockResolvedValue([]);
@@ -182,5 +203,133 @@ describe('createApplication tags', () => {
     expect(tagUpsert).not.toHaveBeenCalled();
     expect(applicationTagCreateMany).not.toHaveBeenCalled();
     expect(created.tags).toEqual([]);
+  });
+});
+
+describe('listApplications ordering', () => {
+  const db: Array<{
+    id: string;
+    userId: string;
+    companyId: string;
+    roleTitle: string;
+    jobDescription: string;
+    postingUrl: string | null;
+    location: string | null;
+    isRemote: boolean;
+    salaryRange: string | null;
+    resumeVersion: string | null;
+    currentStatus: ApplicationStatus;
+    appliedAt: Date;
+    createdAt: Date;
+    company: { id: string; name: string };
+    tags: unknown[];
+  }> = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.length = 0;
+    applicationFindMany.mockImplementation(async (args: any) => {
+      const where = args?.where ?? {};
+      const userId = where.userId;
+      let results = db.filter((row) => row.userId === userId);
+      const orderBy = Array.isArray(args?.orderBy) ? args.orderBy : args?.orderBy ? [args.orderBy] : [];
+      results = [...results].sort((a, b) => {
+        for (const order of orderBy) {
+          const keys = Object.keys(order);
+          for (const key of keys) {
+            const dir = order[key];
+            const av = (a as any)[key];
+            const bv = (b as any)[key];
+            let cmp = 0;
+            if (av instanceof Date && bv instanceof Date) {
+              cmp = av.getTime() - bv.getTime();
+            } else if (typeof av === 'string' && typeof bv === 'string') {
+              cmp = av.localeCompare(bv);
+            } else {
+              cmp = av < bv ? -1 : av > bv ? 1 : 0;
+            }
+            if (cmp !== 0) {
+              return dir === 'desc' ? -cmp : cmp;
+            }
+          }
+        }
+        return 0;
+      });
+      return results;
+    });
+  });
+
+  it('a) rows sharing one appliedAt come back newest-first by createdAt', async () => {
+    const sameAppliedAt = new Date('2026-10-01T00:00:00.000Z');
+    db.push(
+      {
+        id: 'app-old',
+        userId: USER_ID,
+        companyId: 'c1',
+        roleTitle: 'Eng',
+        jobDescription: 'jd',
+        postingUrl: null,
+        location: null,
+        isRemote: false,
+        salaryRange: null,
+        resumeVersion: null,
+        currentStatus: ApplicationStatus.APPLIED,
+        appliedAt: sameAppliedAt,
+        createdAt: new Date('2026-10-01T08:00:00.000Z'),
+        company: { id: 'c1', name: 'C' },
+        tags: [],
+      },
+      {
+        id: 'app-new',
+        userId: USER_ID,
+        companyId: 'c1',
+        roleTitle: 'Eng',
+        jobDescription: 'jd',
+        postingUrl: null,
+        location: null,
+        isRemote: false,
+        salaryRange: null,
+        resumeVersion: null,
+        currentStatus: ApplicationStatus.APPLIED,
+        appliedAt: sameAppliedAt,
+        createdAt: new Date('2026-10-01T10:00:00.000Z'),
+        company: { id: 'c1', name: 'C' },
+        tags: [],
+      },
+    );
+    const result = await listApplications(USER_ID, {});
+    expect(result.map((r) => r.id)).toEqual(['app-new', 'app-old']);
+  });
+
+  it('b) rows sharing appliedAt and createdAt tie-break on id desc, in a fixed expected order', async () => {
+    const sameAppliedAt = new Date('2026-10-01T00:00:00.000Z');
+    const sameCreatedAt = new Date('2026-10-01T10:00:00.000Z');
+    db.push(
+      { id: 'app-b', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: sameAppliedAt, createdAt: sameCreatedAt, company: { id: 'c1', name: 'C' }, tags: [] },
+      { id: 'app-a', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: sameAppliedAt, createdAt: sameCreatedAt, company: { id: 'c1', name: 'C' }, tags: [] },
+      { id: 'app-c', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: sameAppliedAt, createdAt: sameCreatedAt, company: { id: 'c1', name: 'C' }, tags: [] },
+    );
+    const result1 = await listApplications(USER_ID, {});
+    const result2 = await listApplications(USER_ID, {});
+    expect(result1).toEqual(result2);
+    expect(result1.map((r) => r.id)).toEqual(['app-c', 'app-b', 'app-a']);
+  });
+
+  it('c) rows with different appliedAt still sort by appliedAt desc first', async () => {
+    db.push(
+      { id: 'app-old-date-newer-created', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: new Date('2026-09-01T00:00:00.000Z'), createdAt: new Date('2026-10-15T00:00:00.000Z'), company: { id: 'c1', name: 'C' }, tags: [] },
+      { id: 'app-new-date-older-created', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: new Date('2026-10-01T00:00:00.000Z'), createdAt: new Date('2026-09-15T00:00:00.000Z'), company: { id: 'c1', name: 'C' }, tags: [] },
+    );
+    const result = await listApplications(USER_ID, {});
+    expect(result.map((r) => r.id)).toEqual(['app-new-date-older-created', 'app-old-date-newer-created']);
+  });
+
+  it('d) another user\'s rows never appear', async () => {
+    db.push(
+      { id: 'app-other', userId: OTHER_USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: new Date('2026-10-01T00:00:00.000Z'), createdAt: new Date('2026-10-01T10:00:00.000Z'), company: { id: 'c1', name: 'C' }, tags: [] },
+      { id: 'app-mine', userId: USER_ID, companyId: 'c1', roleTitle: 'Eng', jobDescription: 'jd', postingUrl: null, location: null, isRemote: false, salaryRange: null, resumeVersion: null, currentStatus: ApplicationStatus.APPLIED, appliedAt: new Date('2026-10-01T00:00:00.000Z'), createdAt: new Date('2026-10-01T10:00:00.000Z'), company: { id: 'c1', name: 'C' }, tags: [] },
+    );
+    const result = await listApplications(USER_ID, {});
+    expect(result.map((r) => r.id)).toEqual(['app-mine']);
   });
 });
