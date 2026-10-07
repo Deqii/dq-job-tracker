@@ -11,3 +11,4 @@ apps/api/.env
 apps/web/.env
 .tmp/
 **/*.debug.test.*
+*.tsbuildinfo
