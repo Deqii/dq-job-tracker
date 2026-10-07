@@ -5,11 +5,12 @@ const companyFindFirst = vi.hoisted(() => vi.fn());
 const applicationCreate = vi.hoisted(() => vi.fn());
 const applicationFindMany = vi.hoisted(() => vi.fn());
 const applicationFindFirst = vi.hoisted(() => vi.fn());
+const applicationFindFirstOrThrow = vi.hoisted(() => vi.fn());
 const applicationUpdate = vi.hoisted(() => vi.fn());
 const applicationDelete = vi.hoisted(() => vi.fn());
 const applicationTagCreateMany = vi.fn();
 const applicationTagFindMany = vi.fn();
-const statusHistoryCreate = vi.fn();
+const statusHistoryCreate = vi.hoisted(() => vi.fn());
 const tagUpsert = vi.fn();
 
 /**
@@ -48,9 +49,13 @@ const tx = {
 };
 
 const transactionClients: unknown[] = [];
-const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => {
+const transaction = vi.fn(async (fn: unknown) => {
+  // Prisma's two $transaction forms: an array of operations, or a callback.
+  if (Array.isArray(fn)) {
+    return Promise.all(fn);
+  }
   transactionClients.push(tx);
-  return fn(tx);
+  return (fn as (client: typeof tx) => Promise<unknown>)(tx);
 });
 
 vi.mock('../src/lib/prisma', () => ({
@@ -59,14 +64,16 @@ vi.mock('../src/lib/prisma', () => ({
     application: {
       findMany: applicationFindMany,
       findFirst: applicationFindFirst,
+      findFirstOrThrow: applicationFindFirstOrThrow,
       create: applicationCreate,
       update: applicationUpdate,
       delete: applicationDelete,
     },
+    statusHistory: { create: statusHistoryCreate },
   },
 }));
 
-import { createApplication, listApplications } from '../src/services/application.service';
+import { changeStatus, createApplication, listApplications } from '../src/services/application.service';
 import type { ApplicationCreateInput } from '../src/schemas';
 
 const USER_ID = 'user-1';
@@ -228,7 +235,7 @@ describe('listApplications ordering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     db.length = 0;
-    applicationFindMany.mockImplementation(async (args: any) => {
+    applicationFindMany.mockImplementation(async (args: unknown) => {
       const where = args?.where ?? {};
       const userId = where.userId;
       let results = db.filter((row) => row.userId === userId);
@@ -237,9 +244,9 @@ describe('listApplications ordering', () => {
         for (const order of orderBy) {
           const keys = Object.keys(order);
           for (const key of keys) {
-            const dir = order[key];
-            const av = (a as any)[key];
-            const bv = (b as any)[key];
+            const dir = (order as Record<string, unknown>)[key];
+            const av = (a as Record<string, unknown>)[key];
+            const bv = (b as Record<string, unknown>)[key];
             let cmp = 0;
             if (av instanceof Date && bv instanceof Date) {
               cmp = av.getTime() - bv.getTime();
@@ -331,5 +338,87 @@ describe('listApplications ordering', () => {
     );
     const result = await listApplications(USER_ID, {});
     expect(result.map((r) => r.id)).toEqual(['app-mine']);
+  });
+});
+
+interface ChangeStatusRow {
+  id: string;
+  userId: string;
+  currentStatus: ApplicationStatus;
+  statusHistory: Array<{
+    id: string;
+    status: ApplicationStatus;
+    note: string | null;
+    changedAt: Date;
+  }>;
+}
+
+describe('changeStatus', () => {
+  const db: ChangeStatusRow[] = [];
+
+  function seed(overrides: Partial<ChangeStatusRow> = {}): ChangeStatusRow {
+    return {
+      id: 'app-1',
+      userId: USER_ID,
+      currentStatus: ApplicationStatus.APPLIED,
+      statusHistory: [],
+      ...overrides,
+    };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.length = 0;
+    const findRow = async (args: unknown) => {
+      const where = (args as { where?: { id?: string; userId?: string } }).where ?? {};
+      const row = db.find((entry) => entry.id === where.id && entry.userId === where.userId);
+      if (!row) return null;
+      return {
+        ...row,
+        companyId: 'company-1',
+        roleTitle: 'Staff Engineer',
+        jobDescription: 'Original JD snapshot',
+        postingUrl: null,
+        location: null,
+        isRemote: false,
+        salaryRange: null,
+        resumeVersion: null,
+        appliedAt: new Date('2026-09-29T00:00:00.000Z'),
+        createdAt: new Date('2026-09-29T00:00:00.000Z'),
+        company: { id: 'company-1', name: 'Globex' },
+        tags: [],
+      };
+    };
+    applicationFindFirst.mockImplementation(findRow);
+    applicationFindFirstOrThrow.mockImplementation(findRow);
+    applicationUpdate.mockResolvedValue({});
+    statusHistoryCreate.mockResolvedValue({});
+  });
+
+  it('rejects a request equal to currentStatus even when statusHistory is empty, and creates no history row', async () => {
+    db.push(seed({ currentStatus: ApplicationStatus.ASSESSMENT, statusHistory: [] }));
+
+    await expect(
+      changeStatus(USER_ID, 'app-1', { status: ApplicationStatus.ASSESSMENT }),
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'The application is already in this status',
+    });
+
+    expect(statusHistoryCreate).not.toHaveBeenCalled();
+    expect(applicationUpdate).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it('returns not found for another user\'s application and writes nothing', async () => {
+    db.push(seed({ userId: OTHER_USER_ID, currentStatus: ApplicationStatus.APPLIED }));
+
+    await expect(
+      changeStatus(USER_ID, 'app-1', { status: ApplicationStatus.INTERVIEW, note: 'On it' }),
+    ).rejects.toMatchObject({ statusCode: 404, message: 'Application not found' });
+
+    expect(statusHistoryCreate).not.toHaveBeenCalled();
+    expect(applicationUpdate).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
   });
 });
