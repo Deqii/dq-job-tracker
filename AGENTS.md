@@ -66,6 +66,8 @@ These come directly from the PRD's non-functional requirements — treat them as
 - **Every status change inserts a new `StatusHistory` row before or alongside updating `Application.currentStatus`.** Never update `currentStatus` directly without a matching history entry — the dashboard and timeline both depend on that log being complete.
 - **Every query is scoped to `userId`.** There is no shared or admin view in this app; a user must never be able to read or write another user's companies, applications, or tags.
 - **Store all timestamps in UTC**; convert to local time only at the presentation layer.
+- **"Recent activity" (Dashboard)** lists the most recently logged applications, ordered by `Application.createdAt` desc with `id` desc as the tie-breaker.
+- **`Application.appliedAt`** is a user-entered applied date, not an event timestamp. Never use it as the only sort key for chronological views.
 
 ## Git workflow
 
