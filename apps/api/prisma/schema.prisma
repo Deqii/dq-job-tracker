@@ -59,6 +59,7 @@ model Application {
   isRemote       Boolean           @default(false)
   salaryRange    String?
   resumeVersion  String?
+  notes          String?           @db.Text
   currentStatus  ApplicationStatus @default(APPLIED)
   appliedAt      DateTime          @default(now())
   createdAt      DateTime          @default(now())

@@ -54,6 +54,7 @@ export interface Application {
   isRemote: boolean;
   salaryRange: string | null;
   resumeVersion: string | null;
+  notes: string | null;
   currentStatus: ApplicationStatus;
   appliedAt: string;
   createdAt: string;
@@ -84,6 +85,7 @@ export interface ApplicationUpdateInput {
   isRemote?: boolean;
   salaryRange?: string | null;
   resumeVersion?: string | null;
+  notes?: string | null;
   companyId?: string;
   appliedAt?: string;
   tags?: string[];

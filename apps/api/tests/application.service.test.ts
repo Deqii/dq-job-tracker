@@ -73,7 +73,7 @@ vi.mock('../src/lib/prisma', () => ({
   },
 }));
 
-import { changeStatus, createApplication, listApplications } from '../src/services/application.service';
+import { changeStatus, createApplication, listApplications, updateApplication } from '../src/services/application.service';
 import type { ApplicationCreateInput } from '../src/schemas';
 
 const USER_ID = 'user-1';
@@ -210,6 +210,78 @@ describe('createApplication tags', () => {
     expect(tagUpsert).not.toHaveBeenCalled();
     expect(applicationTagCreateMany).not.toHaveBeenCalled();
     expect(created.tags).toEqual([]);
+  });
+});
+
+function updatableApplication() {
+  return {
+    id: 'app-1',
+    userId: USER_ID,
+    companyId: 'company-1',
+    roleTitle: 'Staff Engineer',
+    jobDescription: 'Original JD snapshot',
+    postingUrl: null,
+    location: null,
+    isRemote: false,
+    salaryRange: null,
+    resumeVersion: null,
+    notes: null,
+    currentStatus: ApplicationStatus.APPLIED,
+    appliedAt: new Date('2026-09-29T00:00:00.000Z'),
+    createdAt: new Date('2026-09-29T00:00:00.000Z'),
+    company: { id: 'company-1', name: 'Globex' },
+    tags: [],
+  };
+}
+
+describe('updateApplication notes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    tagStore.clear();
+    tagSeq = 0;
+    companyFindFirst.mockResolvedValue({ id: 'company-1' });
+    applicationFindFirst.mockResolvedValue(updatableApplication());
+    applicationUpdate.mockResolvedValue({
+      ...updatableApplication(),
+      notes: 'Call Jane on Monday',
+    });
+    applicationTagFindMany.mockResolvedValue([]);
+    applicationTagCreateMany.mockResolvedValue({ count: 0 });
+    statusHistoryCreate.mockResolvedValue({});
+  });
+
+  it('persists notes through a lookup scoped to the calling user', async () => {
+    const updated = await updateApplication(USER_ID, 'app-1', { notes: 'Call Jane on Monday' });
+
+    // The application is only ever read with the caller's userId attached, so a
+    // foreign row can never be found and written to.
+    expect(applicationFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'app-1', userId: USER_ID } }),
+    );
+    expect(applicationUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'app-1' },
+        data: expect.objectContaining({ notes: 'Call Jane on Monday' }),
+      }),
+    );
+    expect(updated.notes).toBe('Call Jane on Monday');
+  });
+
+  it('writes nothing when the application belongs to another user', async () => {
+    applicationFindFirst.mockResolvedValue(null);
+
+    await expect(updateApplication(OTHER_USER_ID, 'app-1', { notes: 'not mine' })).rejects.toThrow(
+      'Application not found',
+    );
+    expect(applicationUpdate).not.toHaveBeenCalled();
+  });
+
+  it('clears the stored notes when null is sent', async () => {
+    await updateApplication(USER_ID, 'app-1', { notes: null });
+
+    expect(applicationUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ notes: null }) }),
+    );
   });
 });
 

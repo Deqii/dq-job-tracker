@@ -73,12 +73,18 @@ export function ApplicationDetailPage() {
   const [tagsEdit, setTagsEdit] = useState<string[]>([]);
   const [isTagsDirty, setIsTagsDirty] = useState(false);
   const [tagsError, setTagsError] = useState('');
+  const [notesEdit, setNotesEdit] = useState('');
+  const [isNotesDirty, setIsNotesDirty] = useState(false);
+  const [notesError, setNotesError] = useState('');
 
   useEffect(() => {
     if (application) {
       setTagsEdit(application.tags?.map((t) => t.name) ?? []);
       setIsTagsDirty(false);
       setTagsError('');
+      setNotesEdit(application.notes ?? '');
+      setIsNotesDirty(false);
+      setNotesError('');
     }
   }, [application, application?.id]);
 
@@ -127,6 +133,31 @@ export function ApplicationDetailPage() {
     setTagsEdit(tags);
     setIsTagsDirty(false);
     setTagsError('');
+  };
+
+  const savedNotes = application.notes ?? '';
+
+  const handleNotesChange = (next: string) => {
+    setNotesEdit(next);
+    setIsNotesDirty(next !== savedNotes);
+  };
+
+  const handleSaveNotes = async () => {
+    setNotesError('');
+    const value = notesEdit.trim();
+    try {
+      await updateApplication.mutateAsync({ id: application.id, input: { notes: value } });
+      setNotesEdit(value);
+      setIsNotesDirty(false);
+    } catch (err) {
+      setNotesError(getErrorMessage(err));
+    }
+  };
+
+  const handleCancelNotes = () => {
+    setNotesEdit(savedNotes);
+    setIsNotesDirty(false);
+    setNotesError('');
   };
 
   return (
@@ -255,6 +286,34 @@ export function ApplicationDetailPage() {
           </div>
         </section>
       </div>
+
+      <section className="card mt-6 p-5 sm:p-6">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900">Notes</h2>
+        </div>
+        <p className="mb-4 text-xs text-slate-500">
+          Private to you — whatever you want to recall before the next step.
+        </p>
+        <textarea
+          id="application-notes"
+          className="input min-h-[160px] resize-y"
+          value={notesEdit}
+          onChange={(event) => handleNotesChange(event.target.value)}
+          placeholder="Interviewer names, prep notes, anything to remember..."
+          disabled={updateApplication.isPending}
+        />
+        {isNotesDirty ? (
+          <div className="mt-3 flex items-center gap-2">
+            <button type="button" className="btn btn-primary btn-xs" onClick={handleSaveNotes} disabled={updateApplication.isPending}>
+              Save notes
+            </button>
+            <button type="button" className="btn btn-secondary btn-xs" onClick={handleCancelNotes} disabled={updateApplication.isPending}>
+              Cancel
+            </button>
+          </div>
+        ) : null}
+        {notesError ? <div className="mt-3"><ErrorMessage message={notesError} /></div> : null}
+      </section>
 
       {application.statusHistory && application.statusHistory.length === 0 ? (
         <div className="mt-6">
