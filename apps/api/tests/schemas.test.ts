@@ -115,6 +115,17 @@ describe('applicationCreateSchema', () => {
       }),
     ).toThrow('Validation failed');
   });
+
+  it('trims notes, stores an empty string as null and rejects over 10000 characters', () => {
+    const base = { companyId: 'c1', roleTitle: 'Engineer', jobDescription: 'Full JD' };
+    expect(validateBody(applicationCreateSchema, { ...base, notes: '  call Jane  ' }).notes).toBe(
+      'call Jane',
+    );
+    expect(validateBody(applicationCreateSchema, { ...base, notes: '' }).notes).toBeNull();
+    expect(() =>
+      validateBody(applicationCreateSchema, { ...base, notes: 'x'.repeat(10_001) }),
+    ).toThrow('Validation failed');
+  });
 });
 
 describe('applicationUpdateSchema', () => {
@@ -156,6 +167,13 @@ describe('applicationUpdateSchema', () => {
     expect(applicationUpdateSchema.safeParse({ tags: ['  '] }).success).toBe(false);
     const tags = Array.from({ length: 31 }, (_, i) => `tag-${i}`);
     expect(applicationUpdateSchema.safeParse({ tags }).success).toBe(false);
+  });
+
+  it('trims notes, stores an empty string or null as a clear and rejects over 10000 characters', () => {
+    expect(applicationUpdateSchema.parse({ notes: '  call Jane  ' }).notes).toBe('call Jane');
+    expect(applicationUpdateSchema.parse({ notes: '' }).notes).toBeNull();
+    expect(applicationUpdateSchema.parse({ notes: null }).notes).toBeNull();
+    expect(applicationUpdateSchema.safeParse({ notes: 'x'.repeat(10_001) }).success).toBe(false);
   });
 });
 

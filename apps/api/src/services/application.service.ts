@@ -33,6 +33,7 @@ export interface ApplicationDto {
   isRemote: boolean;
   salaryRange: string | null;
   resumeVersion: string | null;
+  notes: string | null;
   currentStatus: ApplicationStatus;
   appliedAt: Date;
   createdAt: Date;
@@ -105,6 +106,7 @@ export async function createApplication(
         isRemote: input.isRemote,
         salaryRange: nullableOrUndefined(input.salaryRange),
         resumeVersion: nullableOrUndefined(input.resumeVersion),
+        notes: nullableOrUndefined(input.notes),
         currentStatus: input.currentStatus,
         appliedAt: input.appliedAt ? new Date(input.appliedAt) : undefined,
       },
@@ -162,6 +164,7 @@ export async function updateApplication(
         isRemote: input.isRemote,
         salaryRange: nullableOrUndefined(input.salaryRange),
         resumeVersion: nullableOrUndefined(input.resumeVersion),
+        notes: nullableOrUndefined(input.notes),
         appliedAt: input.appliedAt ? new Date(input.appliedAt) : undefined,
       },
       include: applicationInclude,
@@ -279,8 +282,9 @@ function parseDateBoundary(value: string, field: 'from' | 'to', endOfDay = false
   return new Date(`${year}-${month}-${day}T00:00:00.000Z`);
 }
 
-function nullableOrUndefined(value: string | undefined): string | null | undefined {
+function nullableOrUndefined(value: string | null | undefined): string | null | undefined {
   if (value === undefined) return undefined;
+  if (value === null) return null;
   return value.trim() === '' ? null : value.trim();
 }
 
@@ -305,6 +309,7 @@ export function toDto(app: ApplicationRecord | ApplicationDetailRecord): Applica
     isRemote: app.isRemote,
     salaryRange: app.salaryRange,
     resumeVersion: app.resumeVersion,
+    notes: app.notes,
     currentStatus: app.currentStatus,
     appliedAt: app.appliedAt,
     createdAt: app.createdAt,

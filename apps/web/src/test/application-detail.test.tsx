@@ -33,6 +33,7 @@ const application: Application = {
   isRemote: false,
   salaryRange: null,
   resumeVersion: null,
+  notes: null,
   currentStatus: ApplicationStatus.APPLIED,
   appliedAt: '2026-10-01T00:00:00.000Z',
   createdAt: '2026-10-01T10:00:00.000Z',
@@ -150,5 +151,44 @@ describe('ApplicationDetailPage', () => {
     expect(statusSelect).toHaveValue(ApplicationStatus.INTERVIEW);
     expect(noteInput).toHaveValue('Second round on Friday');
     expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+  });
+
+  it('saves notes by sending exactly { notes } to PATCH /api/applications/:id', async () => {
+    const user = userEvent.setup();
+    renderDetail();
+
+    const textarea = await screen.findByPlaceholderText(
+      'Interviewer names, prep notes, anything to remember...',
+    );
+    await user.type(textarea, 'Ask about the on-call rotation');
+    await user.click(screen.getByRole('button', { name: /save notes/i }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalledTimes(1));
+    // Only the notes field travels: no other application field may ride along.
+    expect(patchMock).toHaveBeenCalledWith('/api/applications/app-1', {
+      notes: 'Ask about the on-call rotation',
+    });
+    const body = patchMock.mock.calls[0]?.[1] as { notes?: string };
+    expect(Object.keys(body)).toEqual(['notes']);
+  });
+
+  it('keeps the typed notes on screen and re-enables Save/Cancel when the save fails', async () => {
+    const user = userEvent.setup();
+    patchMock.mockRejectedValueOnce(new Error('Notes could not be saved'));
+    renderDetail();
+
+    const textarea = await screen.findByPlaceholderText(
+      'Interviewer names, prep notes, anything to remember...',
+    );
+    await user.type(textarea, 'Draft that must survive a failure');
+    const save = screen.getByRole('button', { name: /save notes/i });
+    const cancel = screen.getByRole('button', { name: /cancel/i });
+    await user.click(save);
+
+    await screen.findByRole('alert');
+    // The failure keeps the text, so the user can retry or cancel.
+    expect(textarea).toHaveValue('Draft that must survive a failure');
+    expect(save).toBeEnabled();
+    expect(cancel).toBeEnabled();
   });
 });

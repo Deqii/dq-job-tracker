@@ -17,6 +17,18 @@ export type LoginInput = z.infer<typeof loginSchema>;
 const optionalText = (max: number, message?: string) =>
   z.string().max(max, message).optional().or(z.literal(''));
 
+// Trimmed and capped, with an empty string or explicit null meaning "clear". Omitting
+// notes leaves the stored value untouched.
+const notesField = z
+  .string()
+  .trim()
+  .max(10_000, 'Keep it under 10,000 characters')
+  .nullish()
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    return value === '' || value === null ? null : value;
+  });
+
 export const companyCreateSchema = z.object({
   name: z.string().trim().min(1, 'Company name is required').max(200, 'Keep it under 200 characters'),
   website: optionalText(500, 'Keep it under 500 characters'),
@@ -37,6 +49,7 @@ export const applicationCreateSchema = z.object({
   isRemote: z.boolean().default(false),
   salaryRange: optionalText(100, 'Keep it under 100 characters'),
   resumeVersion: optionalText(200, 'Keep it under 200 characters'),
+  notes: notesField,
   currentStatus: z.nativeEnum(ApplicationStatus).default(ApplicationStatus.APPLIED),
   appliedAt: z.string().datetime().optional().or(z.literal('')),
   tags: z.array(z.string().trim().min(1).max(50)).max(30, 'At most 30 tags per application').default([]),
@@ -53,6 +66,7 @@ export const applicationUpdateSchema = z.object({
   isRemote: z.boolean().optional(),
   salaryRange: optionalText(100),
   resumeVersion: optionalText(200),
+  notes: notesField,
   appliedAt: z.string().datetime().optional().or(z.literal('')),
   tags: z.array(z.string().trim().min(1).max(50)).max(30, 'At most 30 tags per application').optional(),
 });
