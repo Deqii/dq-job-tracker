@@ -68,6 +68,7 @@ These come directly from the PRD's non-functional requirements — treat them as
 - **Store all timestamps in UTC**; convert to local time only at the presentation layer.
 - **"Recent activity" (Dashboard)** lists the most recently logged applications, ordered by `Application.createdAt` desc with `id` desc as the tie-breaker.
 - **`Application.appliedAt`** is a user-entered applied date, not an event timestamp. Never use it as the only sort key for chronological views.
+- **Keep `PRD.md` in sync.** When a change alters behavior or the Prisma schema, update the matching section of `PRD.md` in the same PR.
 
 ## Git workflow
 
