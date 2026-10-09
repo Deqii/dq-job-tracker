@@ -41,27 +41,32 @@ The tool is scoped for single-user personal use — there are no social, sharing
 
 ## 3. Core Features
 
-| Feature            | Description                                                                         |
-| ------------------ | ----------------------------------------------------------------------------------- |
-| Authentication     | Secure sign-up/login (JWT-based)                                                    |
-| Company CRUD       | Create/read/update/delete company records                                           |
-| Application CRUD   | Create/read/update/delete applications, including a stored job-description snapshot |
-| Status pipeline    | Move an application through defined stages                                          |
-| Status history log | Timestamped record of every status transition                                       |
-| Notes              | Free-form notes per application                                                     |
-| Tagging            | Custom labels per application                                                       |
-| Search & filter    | Filter by company, status, tag, or date range                                       |
-| Dashboard summary  | Counts per status and response-rate stats                                           |
-| Data export        | Export applications — all or filtered — to an Excel (.xlsx) file                    |
+| Feature                | Description                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| Authentication         | Secure sign-up/login (JWT-based)                                                    |
+| Company CRUD           | Create/read/update/delete company records                                           |
+| Application CRUD       | Create/read/update/delete applications, including a stored job-description snapshot |
+| Status pipeline        | Move an application through defined stages                                          |
+| Status history log     | Timestamped record of every status transition                                       |
+| Notes                  | Free-form notes per application                                                     |
+| Tagging                | Custom labels per application                                                       |
+| Tag editing            | Add/remove tags on the application detail page                                      |
+| Inline status change   | Change an application's status from the list badge without opening it               |
+| Search & filter        | Filter by company, status, tag, or date range                                       |
+| Company search         | Filter the companies list by name                                                   |
+| Dashboard summary      | Counts per status and response-rate stats                                           |
+| Dashboard by-tag stats | Per-tag totals and responded counts on the dashboard                                |
+| Needs follow-up        | Dashboard card listing applications still Applied after 14 days                     |
+| Data export            | Export applications — all or filtered — to an Excel (.xlsx) file                    |
 
 ## 4. User Flow
 
 1. **Sign up / Log in** — user registers or logs in.
-2. **Dashboard (home)** — user sees a summary of all applications grouped by status, plus recent activity.
+2. **Dashboard (home)** — user sees a summary of all applications grouped by status, per-tag stats, a "needs follow-up" card, plus recent activity.
 3. **Log a new application** — user adds (or selects an existing) company, then creates an application: role title, full job description pasted in, posting URL, location, salary range, and initial status ("Applied").
-4. **Update status** — as the process moves forward, the user updates the application's status; each change is appended to that application's status-history log.
-5. **Add notes & tags** — user attaches prep notes, interviewer names, or labels like "referral" as the process continues.
-6. **Search past applications** — user filters by company, status, or tag to revisit a previous job description or check where things stand.
+4. **Update status** — as the process moves forward, the user updates the application's status (from the detail page or directly from the status badge in the applications list); each change is appended to that application's status-history log.
+5. **Add notes & tags** — user attaches prep notes, interviewer names, or labels like "referral" as the process continues; both notes and tags are editable on the application detail page.
+6. **Search past applications** — user filters by company, status, or tag to revisit a previous job description or check where things stand; the companies list can also be searched by name.
 7. **Review dashboard** — user checks aggregate stats (e.g., 40 applied, 6 in interview, response rate).
 8. **Export data** — user exports the full list, or whatever is currently filtered (e.g., just "Interview" status), to an Excel file for offline backup or sharing.
 
@@ -104,8 +109,16 @@ The tool is scoped for single-user personal use — there are no social, sharing
 | `/api/applications/:id`        | GET, PATCH, DELETE | Read/update/delete an application                                                                          |
 | `/api/applications/:id/status` | POST               | Log a status change                                                                                        |
 | `/api/tags`                    | GET, POST          | List/create tags                                                                                           |
-| `/api/dashboard`               | GET                | Aggregate stats by status                                                                                  |
+| `/api/dashboard`               | GET                | Aggregate stats by status, per-tag stats, and follow-ups                                                   |
 | `/api/applications/export`     | GET                | Stream an Excel (.xlsx) file of applications, honoring the same filter query params as `/api/applications` |
+| `/api/health`                  | GET                | Health check                                                                                               |
+
+`GET /api/dashboard` returns `counts` (one count per status), `total`, `successRate` (the share of applications currently at Interview or Offer, as a whole-number percentage; `0` when there are none) and `recentActivity`, plus two additive fields:
+
+- `tagStats` — one entry per tag (`name`, `total`, `responded`), where "responded" means the application's current status is Interview or Offer. Sorted by `total` descending, then name ascending, capped at the 8 highest totals.
+- `followUps` — `{ count, items }` for applications still in `APPLIED` status whose `appliedAt` is at least `FOLLOW_UP_AFTER_DAYS` (14) days in the past. Each item is `{ id, roleTitle, companyName, appliedAt, daysWaiting }`; items are longest-waiting first (then by id) and capped at 5, while `count` is the full matching total.
+
+`PATCH /api/applications/:id` does not accept `jobDescription` — the stored snapshot is immutable. When a `tags` array is sent it is a full replacement: the application's existing tag links are deleted and the supplied set is written instead.
 
 ## 6. Database Schema
 
@@ -151,6 +164,7 @@ model Application {
   isRemote       Boolean           @default(false)
   salaryRange    String?
   resumeVersion  String?
+  notes          String?           @db.Text
   currentStatus  ApplicationStatus @default(APPLIED)
   appliedAt      DateTime          @default(now())
   createdAt      DateTime          @default(now())
@@ -208,8 +222,11 @@ enum ApplicationStatus {
 **Notes on this schema:**
 
 - `Application.jobDescription` uses `@db.Text` specifically so the full posting text — not just a URL — is preserved indefinitely, even after the original listing is edited or removed.
+- `Application.notes` is application-level free-form text (`@db.Text`), separate from the per-stage `StatusHistory.note` recorded on an individual status transition.
 - `StatusHistory` is append-only. `Application.currentStatus` is a denormalized convenience field for fast dashboard queries, while the authoritative timeline always lives in `StatusHistory`.
 - `ApplicationTag` is a many-to-many join table, so one tag (e.g., "referral") can apply across many applications.
+
+Migrations live under `apps/api/prisma/migrations`: `20260917120000_init` and `20261007093007_add_application_notes`.
 
 ## 7. Tech Stack
 
@@ -221,9 +238,21 @@ enum ApplicationStatus {
 | Data fetching      | TanStack Query                                                 |
 | HTTP client        | Axios                                                          |
 | Validation         | Zod                                                            |
+| Styling            | Tailwind CSS                                                   |
 | Backend            | Express (Node.js)                                              |
 | Database           | MySQL                                                          |
 | ORM                | Prisma                                                         |
 | Data export        | ExcelJS (server-side .xlsx generation, streamed as a download) |
 | Auth               | JWT (email + password, bcrypt-hashed)                          |
+| Testing            | Vitest; Testing Library + jsdom (web), Supertest (api)         |
 | Version control    | GitHub — five-milestone, issue-driven workflow                 |
+
+## 8. Status of the PRD
+
+_Last updated: 2026-10-09._
+
+All functional requirements in §2.1 are implemented and verified against the current code.
+
+**Verification note (Performance, section 2.2):** Lighthouse on the production build (`vite preview`), application detail page, on <tanggal>: Performance 100, Accessibility 96, Best Practices 100, SEO 91.
+
+See [`README.md`](./README.md) for setup and usage, and [`AGENTS.md`](./AGENTS.md) for repository conventions and data-safety rules.
