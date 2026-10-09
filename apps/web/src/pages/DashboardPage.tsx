@@ -7,6 +7,7 @@ import { PageHeader } from '../components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { PageLoader } from '../components/Spinner';
+import { TagChip } from '../components/TagChip';
 import { emptyCounts, responseRateOf, useDashboard } from '../hooks/useDashboard';
 import { getErrorMessage } from '../lib/api';
 import { STATUS_LABELS, STATUS_ORDER, STATUS_STYLES, formatDate, formatPercent, timeAgo } from '../lib/utils';
@@ -25,6 +26,7 @@ export function DashboardPage() {
   const total = data.total ?? Object.values(counts).reduce((sum, count) => sum + count, 0);
   const responseRate = responseRateOf(counts, total);
   const recent = data.recentActivity ?? [];
+  const tagStats = data.tagStats ?? [];
 
   const inProgress =
     counts[ApplicationStatus.ASSESSMENT] + counts[ApplicationStatus.INTERVIEW];
@@ -49,36 +51,65 @@ export function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section className="card p-5 sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Pipeline breakdown</h2>
-          <div className="space-y-3">
-            {STATUS_ORDER.map((status) => {
-              const count = counts[status] ?? 0;
-              const percentage = total > 0 ? (count / total) * 100 : 0;
-              const style = STATUS_STYLES[status];
-              return (
-                <div key={status}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="inline-flex items-center gap-2 font-medium text-slate-700">
-                      <span className={`h-2 w-2 rounded-full ${style.bar}`} aria-hidden="true" />
-                      {STATUS_LABELS[status]}
-                    </span>
-                    <span className="text-slate-500">
-                      {count}
-                      <span className="ml-1 text-xs text-slate-500">({Math.round(percentage)}%)</span>
-                    </span>
+        <div className="space-y-6">
+          <section className="card p-5 sm:p-6">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">Pipeline breakdown</h2>
+            <div className="space-y-3">
+              {STATUS_ORDER.map((status) => {
+                const count = counts[status] ?? 0;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                const style = STATUS_STYLES[status];
+                return (
+                  <div key={status}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="inline-flex items-center gap-2 font-medium text-slate-700">
+                        <span className={`h-2 w-2 rounded-full ${style.bar}`} aria-hidden="true" />
+                        {STATUS_LABELS[status]}
+                      </span>
+                      <span className="text-slate-500">
+                        {count}
+                        <span className="ml-1 text-xs text-slate-500">({Math.round(percentage)}%)</span>
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={`h-full rounded-full transition-all ${style.bar}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full transition-all ${style.bar}`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="card p-5 sm:p-6">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">By tag</h2>
+            {tagStats.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                Add tags to your applications to compare sources
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {tagStats.map((stat) => {
+                  const percentage =
+                    stat.total > 0 ? Math.round((stat.responded / stat.total) * 100) : 0;
+                  return (
+                    <li key={stat.name} className="flex items-center justify-between gap-3">
+                      <TagChip name={stat.name} />
+                      <span className="text-sm text-slate-600">
+                        {stat.total} application{stat.total === 1 ? '' : 's'}
+                        <span className="ml-2 text-xs text-slate-500">
+                          {stat.responded} responded ({percentage}%)
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </div>
 
         <section className="card p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between">

@@ -111,10 +111,17 @@ export interface DashboardCounts {
   [ApplicationStatus.WITHDRAWN]: number;
 }
 
+export interface TagStat {
+  name: string;
+  total: number;
+  responded: number;
+}
+
 export interface DashboardStats {
   counts: DashboardCounts;
   total: number;
   recentActivity: Application[];
+  tagStats?: TagStat[];
 }
 
 export interface ApplicationFilters {
