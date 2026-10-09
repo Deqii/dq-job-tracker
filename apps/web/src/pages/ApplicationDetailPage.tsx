@@ -43,7 +43,7 @@ function InfoRow({
     <div className="flex items-start gap-2.5">
       <span className="mt-0.5 text-slate-400">{icon}</span>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
         {link ? (
           <a
             href={link}
@@ -257,7 +257,7 @@ export function ApplicationDetailPage() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Status history</h3>
               {history.length > 0 && history[history.length - 1]?.changedAt ? (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   Last change {timeAgo(history[history.length - 1]?.changedAt ?? '')}
                 </span>
               ) : null}

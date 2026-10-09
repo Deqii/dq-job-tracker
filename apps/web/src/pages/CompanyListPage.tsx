@@ -75,14 +75,14 @@ export function CompanyListPage() {
                   <p className="mt-3 line-clamp-2 text-xs text-slate-500">{company.notes}</p>
                 ) : null}
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className="text-xs text-slate-400">Added {formatDate(company.createdAt)}</span>
+                  <span className="text-xs text-slate-500">Added {formatDate(company.createdAt)}</span>
                   <div className="flex gap-1">
                     {company.website ? (
                       <a
                         href={company.website}
                         target="_blank"
                         rel="noreferrer noopener"
-                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                        className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-600"
                         aria-label={`Visit ${company.name} website`}
                         title="Visit website"
                       >
@@ -91,7 +91,7 @@ export function CompanyListPage() {
                     ) : null}
                     <Link
                       to={`/companies/${company.id}/edit`}
-                      className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                      className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-600"
                       aria-label={`Edit ${company.name}`}
                       title="Edit company"
                     >
@@ -100,7 +100,7 @@ export function CompanyListPage() {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(company.id)}
-                      className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                      className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
                       aria-label={`Delete ${company.name}`}
                       title="Delete company"
                     >

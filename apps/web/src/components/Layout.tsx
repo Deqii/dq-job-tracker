@@ -80,9 +80,9 @@ function UserFooter() {
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-          aria-label="Sign out"
-          title="Sign out"
+          className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+          aria-label="Log out"
+          title="Log out"
         >
           <IconLogout className="h-5 w-5" />
         </button>
@@ -117,7 +117,7 @@ export function Layout() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
                 aria-label="Close menu"
               >
                 <IconClose className="h-5 w-5" />
