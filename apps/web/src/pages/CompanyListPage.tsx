@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { IconBuilding, IconEdit, IconExternalLink, IconPlus, IconTrash } from '../components/Icons';
+import { IconBuilding, IconClose, IconEdit, IconExternalLink, IconPlus, IconSearch, IconTrash } from '../components/Icons';
 import { PageHeader } from '../components/PageHeader';
 import { PageLoader } from '../components/Spinner';
 import { useCompanies, useDeleteCompany } from '../hooks/useCompanies';
@@ -15,15 +15,26 @@ export function CompanyListPage() {
   const { data: companies = [], isLoading, isError, error } = useCompanies();
   const deleteCompany = useDeleteCompany();
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const sorted = [...companies].sort((a, b) => a.name.localeCompare(b.name));
   const pendingCompany = sorted.find((company) => company.id === pendingDelete) ?? null;
+
+  const trimmedQuery = query.trim();
+  const isSearching = trimmedQuery.length > 0;
+  const filtered = isSearching
+    ? sorted.filter((company) => company.name.toLowerCase().includes(trimmedQuery.toLowerCase()))
+    : sorted;
 
   return (
     <div>
       <PageHeader
         title="Companies"
-        subtitle={`${companies.length} ${companies.length === 1 ? 'company' : 'companies'} tracked`}
+        subtitle={
+          isSearching
+            ? `${filtered.length} of ${companies.length} companies`
+            : `${companies.length} ${companies.length === 1 ? 'company' : 'companies'} tracked`
+        }
         actions={
           <Link to="/companies/new" className="btn btn-primary btn-md">
             <IconPlus className="h-4 w-4" />
@@ -50,8 +61,48 @@ export function CompanyListPage() {
       ) : null}
 
       {!isLoading && !isError && companies.length > 0 ? (
+        <div className="card mb-6 p-4">
+          <div className="relative">
+            <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="input pl-9 pr-9"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setQuery('');
+              }}
+              placeholder="Search companies..."
+              aria-label="Search companies"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Clear search"
+              >
+                <IconClose className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {!isLoading && !isError && companies.length > 0 && filtered.length === 0 ? (
+        <EmptyState
+          icon={<IconBuilding className="h-10 w-10" />}
+          title={`No companies match "${trimmedQuery}"`}
+          action={
+            <button type="button" className="btn btn-secondary btn-md" onClick={() => setQuery('')}>
+              Clear
+            </button>
+          }
+        />
+      ) : null}
+
+      {!isLoading && !isError && filtered.length > 0 ? (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((company) => (
+          {filtered.map((company) => (
             <li key={company.id}>
               <div className="card flex h-full flex-col p-5">
                 <div className="flex items-start justify-between gap-2">
