@@ -65,7 +65,7 @@ export function DashboardPage() {
                     </span>
                     <span className="text-slate-500">
                       {count}
-                      <span className="ml-1 text-xs text-slate-400">({Math.round(percentage)}%)</span>
+                      <span className="ml-1 text-xs text-slate-500">({Math.round(percentage)}%)</span>
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -117,7 +117,7 @@ export function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="hidden text-xs text-slate-400 sm:inline">
+                      <span className="hidden text-xs text-slate-500 sm:inline">
                         {timeAgo(application.createdAt)}
                       </span>
                       <StatusBadge status={application.currentStatus} />

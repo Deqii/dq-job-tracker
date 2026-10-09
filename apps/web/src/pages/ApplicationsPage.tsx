@@ -209,7 +209,7 @@ export function ApplicationsPage() {
                           <IconMapPin className="h-4 w-4" />
                           {application.location}
                           {application.isRemote ? (
-                            <span className="text-xs text-slate-400">· Remote</span>
+                            <span className="text-xs text-slate-500">· Remote</span>
                           ) : null}
                         </span>
                       ) : null}
@@ -311,7 +311,7 @@ function StatusBadgeMenu({ application }: { application: Application }) {
               key={status}
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
