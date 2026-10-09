@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { EmptyState } from '../components/EmptyState';
@@ -9,13 +9,13 @@ import { NativeSelect } from '../components/Select';
 import { PageLoader, Spinner } from '../components/Spinner';
 import { StatusBadge } from '../components/StatusBadge';
 import { TagChip } from '../components/TagChip';
-import { downloadExport, useApplications } from '../hooks/useApplications';
+import { downloadExport, useApplications, useUpdateStatus } from '../hooks/useApplications';
 import { useDebouncedValue } from '../hooks/useDebounce';
 import { useTags } from '../hooks/useTags';
 import { getErrorMessage } from '../lib/api';
 import { STATUS_LABELS, STATUS_ORDER, formatDate } from '../lib/utils';
 import { ApplicationStatus } from '../types';
-import type { ApplicationFilters } from '../types';
+import type { Application, ApplicationFilters } from '../types';
 
 function FilterReset({ onReset, active }: { onReset: () => void; active: boolean }) {
   if (!active) return null;
@@ -222,13 +222,128 @@ export function ApplicationsPage() {
                       </div>
                     ) : null}
                   </div>
-                  <StatusBadge status={application.currentStatus} className="shrink-0" />
+                  <StatusBadgeMenu application={application} />
                 </div>
               </Link>
             </li>
           ))}
         </ul>
       ) : null}
+    </div>
+  );
+}
+function StatusBadgeMenu({ application }: { application: Application }) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const updateStatus = useUpdateStatus();
+
+  const current = application.currentStatus;
+  const options = STATUS_ORDER.filter((s) => s !== current);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        btnRef.current?.focus();
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        const items = menuRef.current?.querySelectorAll('button[role="menuitem"]');
+        if (items && items.length > 0) {
+          (items[0] as HTMLButtonElement).focus();
+        }
+      }
+    };
+    const onClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onClickOutside);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onClickOutside);
+    };
+  }, [open]);
+
+  const handleSelect = async (status: ApplicationStatus) => {
+    setError('');
+    try {
+      await updateStatus.mutateAsync({ id: application.id, input: { status } });
+      setOpen(false);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  return (
+    <div className="relative shrink-0">
+      <StatusBadge
+        ref={btnRef}
+        status={current}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (updateStatus.isPending) return;
+          setOpen((v) => !v);
+        }}
+        disabled={updateStatus.isPending}
+        aria-haspopup="menu" aria-expanded={open}
+        className={updateStatus.isPending ? 'opacity-60' : ''}
+      />
+      {open && !updateStatus.isPending ? (
+        <div
+          ref={menuRef}
+          role="menu"
+          className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+        >
+          {options.map((status, idx) => (
+            <button
+              key={status}
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void handleSelect(status);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  const items = Array.from(menuRef.current?.querySelectorAll('button[role="menuitem"]') || []);
+                  const next = items[(idx + 1) % items.length] as HTMLButtonElement | undefined;
+                  next?.focus();
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  const items = Array.from(menuRef.current?.querySelectorAll('button[role="menuitem"]') || []);
+                  const prev = items[(idx - 1 + items.length) % items.length] as HTMLButtonElement | undefined;
+                  prev?.focus();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  void handleSelect(status);
+                } else if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setOpen(false);
+                  btnRef.current?.focus();
+                }
+              }}
+            >
+              {STATUS_LABELS[status]}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {error ? <div className="mt-1 text-xs text-red-600">{error}</div> : null}
     </div>
   );
 }

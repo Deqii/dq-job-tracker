@@ -10,7 +10,17 @@ describe('StatusBadge', () => {
     render(<StatusBadge status={ApplicationStatus.INTERVIEW} />);
     expect(screen.getByText('Interview')).toBeInTheDocument();
   });
+
+  it('renders as a non-button span when no onClick is provided', () => {
+    const { container } = render(<StatusBadge status={ApplicationStatus.APPLIED} />);
+    expect(screen.getByText('Applied')).toBeInTheDocument();
+    const span = container.querySelector('span.badge');
+    expect(span).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
 });
+
 
 describe('StatusTimeline', () => {
   it('renders an empty state when there is no history', () => {
