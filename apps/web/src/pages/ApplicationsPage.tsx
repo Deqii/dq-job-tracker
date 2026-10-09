@@ -288,7 +288,7 @@ function StatusBadgeMenu({ application }: { application: Application }) {
   return (
     <div className="relative shrink-0">
       <StatusBadge
-        ref={btnRef}
+        buttonRef={btnRef}
         status={current}
         onClick={(e) => {
           e.preventDefault();
