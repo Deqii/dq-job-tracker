@@ -21,21 +21,43 @@ export interface TagStatDto {
   responded: number;
 }
 
+export interface FollowUpDto {
+  id: string;
+  roleTitle: string;
+  companyName: string;
+  appliedAt: Date;
+  daysWaiting: number;
+}
+
+export interface FollowUpsDto {
+  count: number;
+  items: FollowUpDto[];
+}
+
 export interface DashboardDto {
   counts: Record<ApplicationStatus, number>;
   total: number;
   successRate: number;
   recentActivity: ApplicationDto[];
   tagStats: TagStatDto[];
+  followUps: FollowUpsDto;
 }
 
 const TAG_STATS_LIMIT = 8;
+const FOLLOW_UPS_LIMIT = 5;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export const FOLLOW_UP_AFTER_DAYS = 14;
 
 function isResponded(status: ApplicationStatus): boolean {
   return status === ApplicationStatus.INTERVIEW || status === ApplicationStatus.OFFER;
 }
 
-export async function getDashboard(userId: string): Promise<DashboardDto> {
+function daysWaitingSince(appliedAt: Date, now: Date): number {
+  return Math.floor((now.getTime() - appliedAt.getTime()) / MS_PER_DAY);
+}
+
+export async function getDashboard(userId: string, now: Date = new Date()): Promise<DashboardDto> {
   const grouped = await prisma.application.groupBy({
     by: ['currentStatus'],
     where: { userId },
@@ -62,6 +84,38 @@ export async function getDashboard(userId: string): Promise<DashboardDto> {
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: 6,
   });
+
+  const followUpWhere = {
+    userId,
+    currentStatus: ApplicationStatus.APPLIED,
+    appliedAt: { lte: new Date(now.getTime() - FOLLOW_UP_AFTER_DAYS * MS_PER_DAY) },
+  };
+
+  const [followUpRows, followUpCount] = await Promise.all([
+    prisma.application.findMany({
+      where: followUpWhere,
+      select: {
+        id: true,
+        roleTitle: true,
+        appliedAt: true,
+        company: { select: { name: true } },
+      },
+      orderBy: [{ appliedAt: 'asc' }, { id: 'asc' }],
+      take: FOLLOW_UPS_LIMIT,
+    }),
+    prisma.application.count({ where: followUpWhere }),
+  ]);
+
+  const followUps: FollowUpsDto = {
+    count: followUpCount,
+    items: followUpRows.map((app) => ({
+      id: app.id,
+      roleTitle: app.roleTitle,
+      companyName: app.company.name,
+      appliedAt: app.appliedAt,
+      daysWaiting: daysWaitingSince(app.appliedAt, now),
+    })),
+  };
 
   // Both relations are scoped to the caller so neither a foreign application
   // nor a foreign tag can ever surface in the aggregation.
@@ -97,5 +151,6 @@ export async function getDashboard(userId: string): Promise<DashboardDto> {
     successRate,
     recentActivity: recent.map((app: RecentRecord) => toDto(app)),
     tagStats,
+    followUps,
   };
 }

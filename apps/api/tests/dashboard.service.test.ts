@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const findMany = vi.fn();
 const groupBy = vi.fn();
+const count = vi.fn();
 const applicationTagFindMany = vi.fn();
 
 vi.mock('../src/lib/prisma', () => ({
@@ -10,6 +11,7 @@ vi.mock('../src/lib/prisma', () => ({
     application: {
       findMany: (...args: unknown[]) => findMany(...args),
       groupBy: (...args: unknown[]) => groupBy(...args),
+      count: (...args: unknown[]) => count(...args),
     },
     applicationTag: {
       findMany: (...args: unknown[]) => applicationTagFindMany(...args),
@@ -78,6 +80,7 @@ describe('getDashboard recent activity', () => {
     groupBy.mockResolvedValue([
       { currentStatus: ApplicationStatus.APPLIED, _count: { _all: 6 } },
     ]);
+    count.mockResolvedValue(0);
     applicationTagFindMany.mockResolvedValue([]);
   });
 
@@ -97,7 +100,7 @@ describe('getDashboard recent activity', () => {
 
     const dashboard = await getDashboard(USER_ID);
 
-    expect(findMany).toHaveBeenCalledTimes(1);
+    expect(findMany).toHaveBeenCalledTimes(2);
     expect(findMany.mock.calls[0][0].where).toEqual({ userId: USER_ID });
     expect(dashboard.recentActivity.map((app) => app.id)).toEqual([
       'app-f',
@@ -165,6 +168,7 @@ describe('getDashboard tag stats', () => {
     links.length = 0;
     groupBy.mockResolvedValue([]);
     findMany.mockResolvedValue([]);
+    count.mockResolvedValue(0);
     // Mirrors the real query's relation filters: a link is only visible when
     // both its application and its tag belong to the calling user.
     applicationTagFindMany.mockImplementation(
@@ -247,5 +251,176 @@ describe('getDashboard tag stats', () => {
     const { tagStats } = await getDashboard(USER_ID);
 
     expect(tagStats).toEqual([{ name: 'linkedin', total: 1, responded: 1 }]);
+  });
+});
+
+interface FollowUpApplication {
+  id: string;
+  userId: string;
+  roleTitle: string;
+  currentStatus: ApplicationStatus;
+  appliedAt: Date;
+  companyName: string;
+}
+
+interface FollowUpWhere {
+  userId?: string;
+  currentStatus?: ApplicationStatus;
+  appliedAt?: { lte?: Date };
+}
+
+type FollowUpOrder = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
+
+function sortFollowUps(
+  rows: FollowUpApplication[],
+  orderBy: FollowUpOrder,
+): FollowUpApplication[] {
+  const entries = (Array.isArray(orderBy) ? orderBy : [orderBy]).flatMap((clause) =>
+    Object.entries(clause),
+  );
+  return [...rows].sort((a, b) => {
+    for (const [field, direction] of entries) {
+      const aValue: string | number = field === 'id' ? a.id : a.appliedAt.getTime();
+      const bValue: string | number = field === 'id' ? b.id : b.appliedAt.getTime();
+      let delta = 0;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        delta = aValue - bValue;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        delta = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      }
+      if (delta !== 0) return direction === 'desc' ? -delta : delta;
+    }
+    return 0;
+  });
+}
+
+describe('getDashboard follow-ups', () => {
+  const NOW = new Date('2026-10-09T12:00:00.000Z');
+
+  function daysAgo(days: number): Date {
+    return new Date(NOW.getTime() - days * 24 * 60 * 60 * 1000);
+  }
+
+  function application(
+    id: string,
+    overrides: Partial<FollowUpApplication> = {},
+  ): FollowUpApplication {
+    return {
+      id,
+      userId: USER_ID,
+      roleTitle: `Role ${id}`,
+      currentStatus: ApplicationStatus.APPLIED,
+      appliedAt: daysAgo(20),
+      companyName: `Company ${id}`,
+      ...overrides,
+    };
+  }
+
+  function matches(row: FollowUpApplication, where: FollowUpWhere): boolean {
+    if (where.userId !== undefined && row.userId !== where.userId) return false;
+    if (where.currentStatus !== undefined && row.currentStatus !== where.currentStatus) {
+      return false;
+    }
+    const lte = where.appliedAt?.lte;
+    if (lte !== undefined && row.appliedAt.getTime() > lte.getTime()) return false;
+    return true;
+  }
+
+  function installFake(rows: FollowUpApplication[]) {
+    findMany.mockImplementation(
+      async (args: { where: FollowUpWhere; orderBy: FollowUpOrder; take?: number }) => {
+        if (args.where.appliedAt === undefined) return [];
+        return sortFollowUps(
+          rows.filter((row) => matches(row, args.where)),
+          args.orderBy,
+        )
+          .slice(0, args.take)
+          .map((row) => ({
+            id: row.id,
+            roleTitle: row.roleTitle,
+            appliedAt: row.appliedAt,
+            company: { name: row.companyName },
+          }));
+      },
+    );
+    count.mockImplementation(
+      async (args: { where: FollowUpWhere }) =>
+        rows.filter((row) => matches(row, args.where)).length,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    groupBy.mockResolvedValue([]);
+    applicationTagFindMany.mockResolvedValue([]);
+    findMany.mockResolvedValue([]);
+    count.mockResolvedValue(0);
+  });
+
+  it('includes an application at the 14-day boundary and excludes one at 13 days', async () => {
+    installFake([
+      application('at-boundary', { appliedAt: daysAgo(14) }),
+      application('too-fresh', { appliedAt: daysAgo(13) }),
+    ]);
+
+    const { followUps } = await getDashboard(USER_ID, NOW);
+
+    expect(followUps.items.map((item) => item.id)).toEqual(['at-boundary']);
+    expect(followUps.items[0].daysWaiting).toBe(14);
+    expect(followUps.count).toBe(1);
+  });
+
+  it('never includes applications that are not in APPLIED status', async () => {
+    installFake([
+      application('applied', { appliedAt: daysAgo(20) }),
+      application('interview', {
+        appliedAt: daysAgo(30),
+        currentStatus: ApplicationStatus.INTERVIEW,
+      }),
+      application('offer', { appliedAt: daysAgo(30), currentStatus: ApplicationStatus.OFFER }),
+      application('rejected', {
+        appliedAt: daysAgo(30),
+        currentStatus: ApplicationStatus.REJECTED,
+      }),
+      application('withdrawn', {
+        appliedAt: daysAgo(30),
+        currentStatus: ApplicationStatus.WITHDRAWN,
+      }),
+    ]);
+
+    const { followUps } = await getDashboard(USER_ID, NOW);
+
+    expect(followUps.items.map((item) => item.id)).toEqual(['applied']);
+    expect(followUps.count).toBe(1);
+  });
+
+  it('orders longest-waiting first with an id tie-break, caps at 5, and counts the total', async () => {
+    installFake([
+      application('g', { appliedAt: daysAgo(40) }),
+      application('a', { appliedAt: daysAgo(30) }),
+      application('b', { appliedAt: daysAgo(30) }),
+      application('c', { appliedAt: daysAgo(28) }),
+      application('e', { appliedAt: daysAgo(25) }),
+      application('d', { appliedAt: daysAgo(20) }),
+      application('f', { appliedAt: daysAgo(15) }),
+    ]);
+
+    const { followUps } = await getDashboard(USER_ID, NOW);
+
+    expect(followUps.items.map((item) => item.id)).toEqual(['g', 'a', 'b', 'c', 'e']);
+    expect(followUps.items).toHaveLength(5);
+    expect(followUps.count).toBe(7);
+  });
+
+  it("never includes another user's applications", async () => {
+    installFake([
+      application('mine', { appliedAt: daysAgo(20) }),
+      application('other', { appliedAt: daysAgo(30), userId: OTHER_USER }),
+    ]);
+
+    const { followUps } = await getDashboard(USER_ID, NOW);
+
+    expect(followUps.items.map((item) => item.id)).toEqual(['mine']);
+    expect(followUps.count).toBe(1);
   });
 });
