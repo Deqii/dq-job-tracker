@@ -179,4 +179,36 @@ describe('Applications list status shortcut', () => {
     expect(screen.getByRole('button', { name: /applied/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /applied/i })).toBeEnabled();
   });
+
+  it('Pressing Escape in the status menu returns focus to the badge', async () => {
+    getMock.mockImplementation((url) => {
+      if (url === '/api/applications') {
+        return Promise.resolve({ data: applications });
+      }
+      if (url === '/api/tags') {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const user = userEvent.setup();
+    renderList();
+
+    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
+
+    const badge = screen.getByRole('button', { name: /applied/i });
+    await user.click(badge);
+
+    await screen.findByRole('menu');
+    const firstOption = screen.getAllByRole('menuitem')[0]!;
+    await user.keyboard('{ArrowDown}');
+    expect(firstOption).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('menuitem', { name: /assessment/i })).not.toBeInTheDocument();
+    });
+    expect(badge).toHaveFocus();
+  });
 });

@@ -17,8 +17,8 @@ export function StatusBadge({
   disabled,
   ariaExpanded,
   ariaHasPopup,
-  ref,
-}: StatusBadgeProps & { ref?: React.Ref<HTMLButtonElement> }) {
+  buttonRef,
+}: StatusBadgeProps & { buttonRef?: React.Ref<HTMLButtonElement> }) {
   const style = STATUS_STYLES[status];
   const classes = `badge ring-1 ${style.badge} ${className}`;
 
@@ -26,7 +26,7 @@ export function StatusBadge({
     return (
       <button
         type="button"
-        ref={ref}
+        ref={buttonRef}
         className={classes}
         onClick={onClick}
         disabled={disabled}
