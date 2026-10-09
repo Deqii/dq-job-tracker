@@ -117,11 +117,25 @@ export interface TagStat {
   responded: number;
 }
 
+export interface FollowUp {
+  id: string;
+  roleTitle: string;
+  companyName: string;
+  appliedAt: string;
+  daysWaiting: number;
+}
+
+export interface DashboardFollowUps {
+  count: number;
+  items: FollowUp[];
+}
+
 export interface DashboardStats {
   counts: DashboardCounts;
   total: number;
   recentActivity: Application[];
   tagStats?: TagStat[];
+  followUps?: DashboardFollowUps;
 }
 
 export interface ApplicationFilters {

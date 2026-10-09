@@ -27,6 +27,7 @@ export function DashboardPage() {
   const responseRate = responseRateOf(counts, total);
   const recent = data.recentActivity ?? [];
   const tagStats = data.tagStats ?? [];
+  const followUps = data.followUps ?? { count: 0, items: [] };
 
   const inProgress =
     counts[ApplicationStatus.ASSESSMENT] + counts[ApplicationStatus.INTERVIEW];
@@ -111,54 +112,87 @@ export function DashboardPage() {
           </section>
         </div>
 
-        <section className="card p-5 sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
-            <Link
-              to="/applications"
-              className="text-sm font-medium text-brand-600 hover:text-brand-700"
-            >
-              View all
-            </Link>
-          </div>
-          {recent.length === 0 ? (
-            <EmptyState
-              icon={<IconBriefcase className="h-8 w-8" />}
-              title="Nothing here yet"
-              description="Log your first application to start building your search history."
-              action={
-                <Link to="/applications/new" className="btn btn-primary btn-sm">
-                  <IconPlus className="h-4 w-4" />
-                  Log an application
-                </Link>
-              }
-            />
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {recent.map((application) => (
-                <li key={application.id}>
-                  <Link
-                    to={`/applications/${application.id}`}
-                    className="flex items-center justify-between gap-3 py-3 transition hover:bg-slate-50"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-800">{application.roleTitle}</p>
-                      <p className="truncate text-xs text-slate-500">
-                        {application.company?.name} · {formatDate(application.appliedAt)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="hidden text-xs text-slate-500 sm:inline">
-                        {timeAgo(application.createdAt)}
+        <div className="space-y-6">
+          <section className="card p-5 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Needs follow-up</h2>
+              <span className="text-sm font-medium text-slate-500">{followUps.count}</span>
+            </div>
+            {followUps.items.length === 0 ? (
+              <p className="text-sm text-slate-500">Nothing to follow up on yet.</p>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {followUps.items.map((application) => (
+                  <li key={application.id}>
+                    <Link
+                      to={`/applications/${application.id}`}
+                      className="flex items-center justify-between gap-3 py-3 transition hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">{application.roleTitle}</p>
+                        <p className="truncate text-xs text-slate-500">
+                          {application.companyName} · {formatDate(application.appliedAt)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs text-slate-500">
+                        waiting {application.daysWaiting} days
                       </span>
-                      <StatusBadge status={application.currentStatus} />
-                    </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card p-5 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
+              <Link
+                to="/applications"
+                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+              >
+                View all
+              </Link>
+            </div>
+            {recent.length === 0 ? (
+              <EmptyState
+                icon={<IconBriefcase className="h-8 w-8" />}
+                title="Nothing here yet"
+                description="Log your first application to start building your search history."
+                action={
+                  <Link to="/applications/new" className="btn btn-primary btn-sm">
+                    <IconPlus className="h-4 w-4" />
+                    Log an application
                   </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {recent.map((application) => (
+                  <li key={application.id}>
+                    <Link
+                      to={`/applications/${application.id}`}
+                      className="flex items-center justify-between gap-3 py-3 transition hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">{application.roleTitle}</p>
+                        <p className="truncate text-xs text-slate-500">
+                          {application.company?.name} · {formatDate(application.appliedAt)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="hidden text-xs text-slate-500 sm:inline">
+                          {timeAgo(application.createdAt)}
+                        </span>
+                        <StatusBadge status={application.currentStatus} />
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
