@@ -1,0 +1,17 @@
+Pages parsed (4): B-Dashboard, B-Applications, B-Detail, B-Form
+
+Rules merged: 69   keyframes: 11   reduced-motion groups: 2
+Resolved by design (RESOLUTIONS / KEYFRAME_SPLIT / auto-merge):
+  - selector variant merged: ".stg:hover" (B-Form) -> ".stg:hover:not(:disabled)" (declarations identical; the guard only prevents hover/press on disabled buttons)
+  - selector variant merged: ".stg:active" (B-Form) -> ".stg:active:not(:disabled)" (declarations identical; the guard only prevents hover/press on disabled buttons)
+  - .field: transition: superset (box-shadow + background-color)  [B-Dashboard+B-Applications: box-shadow .15s ease | B-Detail+B-Form: box-shadow .15s ease, background-color .15s ease]
+  - .sticker: animation-delay uses --sticker-base (per page: set it on the page wrapper)  [B-Dashboard: calc(var(--d, 0ms) + 500ms) | B-Applications: calc(var(--d, 0ms) + 400ms) | B-Detail+B-Form: calc(var(--d, 0ms) + 300ms)]
+  - .live::after: background: var(--ping, var(--s3)) (superset)  [B-Dashboard+B-Applications: var(--s3) | B-Detail: var(--ping, var(--s3))]
+  - @keyframes drop-in split into drop-in-card, drop-in-row, drop-in-menu: three different slide distances (14px + 1.5deg tilt on cards, 12px on history rows, 10px on menus)
+
+Per-page --sticker-base: B-Dashboard=500ms, B-Applications=400ms, B-Detail=300ms, B-Form=300ms
+Declarations skipped because they contain {{holes}} (values come from data at runtime): --d x4, --i x2, --marker x4, --r x1, background x23, border x6, box-shadow x2, color x10, left x2, opacity x6, scale x2, width x4
+
+REDUCED-MOTION COVERAGE
+All CSS animations and transitions are covered by the reduced-motion block.
+No inline-style transitions or animations.

@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Form, Warm Editorial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #F3E9D6; }
+.ed, .ed * { box-sizing: border-box; }
+.ed a { color: inherit; text-decoration: none; }
+.ed button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; }
+.ed button:disabled { cursor: default; }
+.ed input, .ed textarea { font: inherit; color: inherit; }
+.ed input::placeholder, .ed textarea::placeholder { color: var(--ink3); opacity: 1; }
+.ed :focus-visible { outline: 3px solid var(--s3); outline-offset: 3px; }
+.ed input:focus-visible, .ed textarea:focus-visible { outline: none; }
+.field { transition: box-shadow .15s ease, background-color .15s ease; }
+.field:focus-within { box-shadow: 4px 4px 0 var(--ink); }
+.tagfield:focus-within { border-style: solid !important; background: var(--card) !important; }
+.nav-b { transition: background-color .15s ease, border-color .15s ease; }
+.nav-b:hover { background: var(--card) !important; border-color: var(--ink) !important; color: var(--ink) !important; }
+.hard { transition: transform .15s ease, box-shadow .15s ease; }
+.hard:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--sh, var(--ink)) !important; }
+.hard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sh, var(--ink)) !important; }
+.off { background: var(--track) !important; color: var(--ink3) !important; border: 2px dashed var(--ink3) !important; box-shadow: none !important; }
+.back { transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease; }
+.back:hover { background: var(--marker) !important; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+.arr { transition: transform .2s ease; }
+.back:hover .arr { transform: translateX(-4px); }
+.stg { transition: transform .15s ease, box-shadow .15s ease, background-color .2s ease, color .2s ease; }
+.stg:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.stg:active { transform: translate(1px, 1px); box-shadow: none; }
+.opt { transition: background-color .12s ease; }
+.opt:hover { background: var(--marker); }
+.rem .track { transition: background-color .2s ease, box-shadow .15s ease; }
+.rem:hover .track { box-shadow: 3px 3px 0 var(--ink); }
+.thumb { transition: left .25s cubic-bezier(.2,.9,.3,1.3); }
+.meter { transition: width .45s cubic-bezier(.2,.8,.2,1), background-color .3s ease; }
+@keyframes pop { 0% { opacity: 0; transform: scale(.3) rotate(calc(var(--r, 0deg) - 25deg)); } 60% { opacity: 1; transform: scale(1.14) rotate(calc(var(--r, 0deg) + 4deg)); } 100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+@keyframes chip-in { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+.sticker { transform: rotate(var(--r, 0deg)); animation: pop .55s cubic-bezier(.2,.9,.3,1.2) backwards; animation-delay: calc(var(--d, 0ms) + 300ms); }
+.pop-now { transform: rotate(var(--r, 0deg)); animation: pop .45s cubic-bezier(.2,.9,.3,1.2) backwards; }
+.menu-in { animation: drop-in .22s ease-out backwards; }
+.chip-in { animation: chip-in .3s cubic-bezier(.2,.9,.3,1.3) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .sticker, .pop-now, .menu-in, .chip-in { animation: none; }
+  .field, .nav-b, .hard, .back, .arr, .stg, .opt, .rem .track, .thumb, .meter { transition: none; }
+}
+</style>
+</helmet>
+<div class="ed" style="--marker: {{accent}}; --paper: #F3E9D6; --side: #EADFC8; --card: #FFFBF0; --ink: #1D1A16; --ink2: #5E5546; --ink3: #6B6151; --s1: #7C9BFF; --s2: #4A6BFF; --s3: #2A3FD0; --good: #0ca30c; --crit: #d03b3b; --gray: #857B68; --line: #DCCFB4; --track: #E8DCC2; --display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #F3E9D6; color: #1D1A16; font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.45;">
+
+  <aside style="flex: 0 0 248px; background: var(--side); border-right: 2px solid var(--ink); padding: 24px 16px; display: flex; flex-direction: column; gap: 28px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 0 6px;">
+      <div style="width: 42px; height: 42px; border-radius: 13px; background: var(--marker); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transform: rotate(-4deg); display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1A16" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+        <span style="font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; line-height: 1.1;">Job Tracker</span>
+        <span style="font-size: 12.5px; color: var(--ink2);">Application manager</span>
+      </div>
+    </div>
+
+    <nav aria-label="Main" style="display: flex; flex-direction: column; gap: 6px;">
+      <a class="nav-b" href="B-Dashboard.dc.html" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span>
+        <span style="flex: 1 1 auto;">Dashboard</span>
+      </a>
+      <a href="B-Applications.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); font-weight: 700;">
+        <span style="display: flex; color: var(--marker);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg></span>
+        <span style="flex: 1 1 auto;">Applications</span>
+        <span class="sticker" style="--r: -4deg; --d: 0ms; min-width: 28px; height: 22px; padding: 0 8px; border-radius: 11px; border: 2px solid var(--ink); background: var(--marker); color: var(--ink); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">22</span>
+      </a>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path><path d="M9 9v.01"></path><path d="M9 12v.01"></path><path d="M9 15v.01"></path><path d="M9 18v.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Companies</span>
+      </button>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><path d="M7 7h.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Tags</span>
+      </button>
+    </nav>
+
+    <div style="flex: 1 1 auto;"></div>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 16px 6px 0; border-top: 2px dashed var(--ink3);">
+      <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: var(--marker); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; font-size: 16px; flex: 0 0 auto;">T</div>
+      <span style="flex: 1 1 auto; font-weight: 600;">Tio</span>
+      <button type="button" class="nav-b" aria-label="Sign out" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; color: var(--ink2); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 0 32px 48px;">
+
+    <header style="padding: 22px 0 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;">
+      <a class="back" href="B-Applications.dc.html" style="display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px 0 16px; border-radius: 22px; border: 2px solid var(--ink); background: var(--card); font-weight: 700; font-size: 14px;">
+        <span class="arr" style="display: flex;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg></span>
+        <span>Back to applications</span>
+      </a>
+    </header>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <h1 style="margin: 0; font-family: var(--display); font-weight: 800; font-size: 52px; line-height: 1.02; letter-spacing: -0.035em; text-wrap: balance;">Log a new application</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink2); max-width: 56ch;">Paste the full posting and pick a company to get it saved in under a minute.</p>
+    </div>
+
+    <div style="margin-top: 28px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px;">
+
+      <section style="flex: 1.6 1 560px; min-width: 0; background: var(--card); border: 2px solid var(--ink); border-radius: 28px; box-shadow: 6px 6px 0 var(--ink); padding: 30px 32px 34px; display: flex; flex-direction: column; gap: 28px;">
+
+        <sc-if value="{{hasSaved}}" hint-placeholder-val="{{ false }}">
+          <div class="pop-now" style="--r: -1deg; display: flex; align-items: center; gap: 12px; padding: 12px 18px; border: 2px solid var(--ink); border-radius: 18px; background: var(--marker); box-shadow: 3px 3px 0 var(--ink); font-weight: 700;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            <span>{{savedMsg}}</span>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Company</h2>
+          <p style="margin: 0 0 8px; font-size: 13.5px; line-height: 1.5; color: var(--ink2);">Start typing to filter. A name that does not exist yet can be created inline.</p>
+          <div style="position: relative;">
+            <label class="field" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px; color: var(--ink3);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+              <input type="text" aria-label="Company" autocomplete="off" value="{{company}}" onChange="{{onCompany}}" onFocus="{{openCombo}}" onBlur="{{closeCombo}}" placeholder="Search companies, or type a new one…" style="flex: 1 1 auto; min-width: 0; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+              <sc-if value="{{isExisting}}" hint-placeholder-val="{{ false }}">
+                <span class="pop-now" style="--r: -2deg; display: flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--good); color: var(--ink); font-size: 12.5px; font-weight: 800; white-space: nowrap;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                  <span>Saved company</span>
+                </span>
+              </sc-if>
+              <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}">
+                <span class="pop-now" style="--r: 2deg; padding: 2px 10px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--marker); color: var(--ink); font-size: 12.5px; font-weight: 800; white-space: nowrap;">New company</span>
+              </sc-if>
+            </label>
+            <sc-if value="{{comboOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="menu-in" role="listbox" aria-label="Companies" style="position: absolute; left: 0; right: 0; top: calc(100% + 10px); z-index: 20; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--ink); padding: 8px; display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow: auto;">
+                <div style="padding: 6px 12px 4px; font-size: 12.5px; font-weight: 700; color: var(--ink3);">{{listTitle}}</div>
+                <sc-for list="{{matches}}" as="m" hint-placeholder-count="6">
+                  <button type="button" role="option" class="opt" onMouseDown="{{m.choose}}" style="height: 44px; padding: 0 12px; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-weight: 600;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+                    <span>{{m.name}}</span>
+                  </button>
+                </sc-for>
+                <sc-if value="{{canCreate}}" hint-placeholder-val="{{ false }}">
+                  <button type="button" role="option" class="opt" onMouseDown="{{createNew}}" style="height: 48px; padding: 0 12px; border-radius: 12px; border-top: 2px dashed var(--line); display: flex; align-items: center; gap: 12px; font-weight: 700;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                    <span>{{createLabel}}</span>
+                  </button>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 28px; border-top: 2px dashed var(--line);">
+          <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Role</h2>
+          <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+            <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700;">
+              <span>Role title</span>
+              <span style="padding: 1px 9px; border: 1.5px solid var(--ink); border-radius: 999px; background: {{roleReq.bg}}; color: var(--ink); font-size: 11.5px; font-weight: 800;">{{roleReq.text}}</span>
+            </span>
+            <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+              <input type="text" value="{{role}}" onChange="{{onRole}}" placeholder="e.g. Senior Software Engineer" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+            </span>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+            <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700;">
+              <span>Job description</span>
+              <span style="padding: 1px 9px; border: 1.5px solid var(--ink); border-radius: 999px; background: {{descReq.bg}}; color: var(--ink); font-size: 11.5px; font-weight: 800;">{{descReq.text}}</span>
+            </span>
+            <span style="font-size: 13.5px; line-height: 1.5; color: var(--ink2);">Paste the entire posting text. It's kept forever, even if the listing disappears.</span>
+            <span class="field" style="display: flex; padding: 14px 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 18px;">
+              <textarea rows="9" value="{{desc}}" onChange="{{onDesc}}" placeholder="Paste the full job description here…" style="width: 100%; min-height: 190px; resize: vertical; background: transparent; border: 0; font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.6; color: var(--ink);"></textarea>
+            </span>
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 28px; border-top: 2px dashed var(--line);">
+          <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Details</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 18px 20px;">
+            <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Posting URL</span>
+              <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+                <input type="text" value="{{url}}" onChange="{{onUrl}}" placeholder="https://..." style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+              </span>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Location</span>
+              <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+                <input type="text" value="{{loc}}" onChange="{{onLoc}}" placeholder="e.g. Jakarta" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+              </span>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Salary range</span>
+              <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+                <input type="text" value="{{salary}}" onChange="{{onSalary}}" placeholder="e.g. Rp 8–12 juta" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+              </span>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Resume version used</span>
+              <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+                <input type="text" value="{{resume}}" onChange="{{onResume}}" placeholder="e.g. resume-2026-v2.pdf" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+              </span>
+            </label>
+          </div>
+          <button type="button" class="rem" role="switch" aria-checked="{{remote}}" onClick="{{toggleRemote}}" style="display: inline-flex; align-items: center; gap: 14px; align-self: flex-start; font-weight: 700;">
+            <span class="track" style="position: relative; width: 58px; height: 34px; border: 2px solid var(--ink); border-radius: 17px; background: {{remBg}}; flex: 0 0 auto;">
+              <span class="thumb" style="position: absolute; top: 3px; left: {{remLeft}}px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink); background: var(--card);"></span>
+            </span>
+            <span>This role is remote</span>
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 28px; border-top: 2px dashed var(--line);">
+          <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Status &amp; tags</h2>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 700;">Initial status</span>
+            <div role="group" aria-label="Initial status" style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <sc-for list="{{stages}}" as="s" hint-placeholder-count="7">
+                <button type="button" class="stg" aria-pressed="{{s.aria}}" onClick="{{s.pick}}" style="height: 42px; padding: 0 16px 0 12px; border-radius: 21px; border: 2px solid var(--ink); background: {{s.bg}}; color: {{s.fg}}; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px;">
+                  <span style="width: 16px; height: 16px; border-radius: 5px; border: 2px solid {{s.swb}}; background: {{s.sw}}; flex: 0 0 auto;"></span>
+                  <span>{{s.label}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 18px 20px; align-items: start;">
+            <label style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Applied date</span>
+              <span class="field" style="display: flex; align-items: center; height: 50px; padding: 0 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px;">
+                <input type="date" value="{{applied}}" onChange="{{onApplied}}" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink); color-scheme: light;">
+              </span>
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 700;">Tags</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <sc-for list="{{tagChips}}" as="t" hint-placeholder-count="2">
+                  <button type="button" class="stg chip-in" aria-pressed="{{t.on}}" onClick="{{t.toggle}}" style="height: 36px; padding: 0 12px 0 14px; border-radius: 18px; border: {{t.bd}}; background: {{t.bg}}; color: {{t.fg}}; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px;">
+                    <span>{{t.label}}</span>
+                    <sc-if value="{{t.on}}" hint-placeholder-val="{{ false }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                    </sc-if>
+                  </button>
+                </sc-for>
+              </div>
+              <label class="field tagfield" style="height: 42px; display: flex; align-items: center; padding: 0 16px; border: 2px dashed var(--ink3); border-radius: 21px;">
+                <input type="text" aria-label="Add a tag" value="{{tagDraft}}" onChange="{{onTagDraft}}" onKeyDown="{{onTagKey}}" placeholder="Type a tag and press Enter" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 14px; color: var(--ink);">
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside style="flex: 1 1 340px; min-width: 0; position: sticky; top: 24px; display: flex; flex-direction: column; gap: 24px;">
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Before you save</h2>
+            <span style="font-size: 13px; font-weight: 700; color: var(--ink2);">{{doneText}}</span>
+          </div>
+          <div style="height: 12px; border-radius: 6px; background: var(--track); overflow: hidden;">
+            <div class="meter" style="height: 100%; width: {{pct}}%; background: {{barBg}}; border-radius: 6px;"></div>
+          </div>
+          <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px;">
+            <sc-for list="{{checks}}" as="c" hint-placeholder-count="2">
+              <li style="display: flex; align-items: center; gap: 12px;">
+                <span style="width: 28px; height: 28px; border-radius: 9px; border: {{c.bd}}; background: {{c.bg}}; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+                  <sc-if value="{{c.ok}}" hint-placeholder-val="{{ false }}">
+                    <svg class="pop-now" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1A16" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                  </sc-if>
+                </span>
+                <span style="flex: 1 1 auto; font-weight: 600;">{{c.label}}</span>
+                <span style="font-size: 13px; color: var(--ink3);">{{c.hint}}</span>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+
+        <section style="background: var(--side); border: 2px solid var(--ink); border-radius: 24px; padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Board preview</h2>
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink2);">
+              <span style="width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--ink); background: {{pv.laneSw}}; flex: 0 0 auto;"></span>
+              <span>{{pv.laneText}}</span>
+            </span>
+          </div>
+          <article style="background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 3px 3px 0 var(--ink); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="min-width: 0;">
+              <h3 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em; line-height: 1.2; overflow-wrap: anywhere; opacity: {{pv.roleOp}};">{{pv.role}}</h3>
+              <div style="margin-top: 3px; font-size: 14px; color: var(--ink2); overflow-wrap: anywhere; opacity: {{pv.companyOp}};">{{pv.company}}</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <span style="display: flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 12.5px; font-weight: 600; opacity: {{pv.cityOp}};">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span style="overflow-wrap: anywhere;">{{pv.city}}</span>
+              </span>
+              <sc-for list="{{pvTags}}" as="g" hint-placeholder-count="1">
+                <span class="chip-in" style="padding: 3px 11px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: 12.5px; font-weight: 700;">{{g.label}}</span>
+              </sc-for>
+              <sc-if value="{{noTags}}" hint-placeholder-val="{{ true }}">
+                <span style="padding: 3px 11px; border: 1.5px dashed var(--ink3); border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--ink3);">No tags</span>
+              </sc-if>
+              <sc-if value="{{hasSalary}}" hint-placeholder-val="{{ false }}">
+                <span class="pop-now" style="--r: -2deg; padding: 3px 11px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--marker); font-size: 12.5px; font-weight: 700;">{{pv.salary}}</span>
+              </sc-if>
+              <sc-if value="{{remote}}" hint-placeholder-val="{{ false }}">
+                <span class="pop-now" style="--r: 2deg; padding: 3px 11px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--s1); font-size: 12.5px; font-weight: 700;">Remote</span>
+              </sc-if>
+            </div>
+            <div style="padding-top: 12px; border-top: 2px dashed var(--line); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">{{pv.date}}</div>
+          </article>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink3);">This is how the card will look on the board. It updates as you type.</p>
+        </section>
+      </aside>
+    </div>
+
+    <div style="position: sticky; bottom: 16px; z-index: 5; margin-top: 28px; background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 6px 6px 0 var(--ink); padding: 14px 18px 14px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0; font-weight: 600;">
+        <sc-if value="{{ready}}" hint-placeholder-val="{{ false }}">
+          <span class="pop-now" style="width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ink); background: var(--good); display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1A16" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+          </span>
+        </sc-if>
+        <sc-if value="{{notReady}}" hint-placeholder-val="{{ true }}">
+          <span style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); background: var(--marker); flex: 0 0 auto;"></span>
+        </sc-if>
+        <span>{{barMsg}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+        <a class="hard" href="B-Applications.dc.html" style="height: 46px; padding: 0 22px; border-radius: 23px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; display: flex; align-items: center;">Cancel</a>
+        <button type="button" class="{{btnCls}}" disabled="{{notReady}}" onClick="{{saveAnother}}" style="height: 46px; padding: 0 22px; border-radius: 23px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700;">Save &amp; add another</button>
+        <sc-if value="{{ready}}" hint-placeholder-val="{{ false }}">
+          <a class="hard" href="B-Applications.dc.html" style="--sh: var(--marker); height: 46px; padding: 0 26px; border-radius: 23px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); box-shadow: 4px 4px 0 var(--marker); font-weight: 700; display: flex; align-items: center;">Save application</a>
+        </sc-if>
+        <sc-if value="{{notReady}}" hint-placeholder-val="{{ true }}">
+          <button type="button" class="off" disabled="{{notReady}}" style="height: 46px; padding: 0 26px; border-radius: 23px; font-weight: 700;">Save application</button>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFD23F","options":["#FFD23F","#FFA3C7","#9BE7C4"]},"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+
+    const COMPANIES = ['Alexwater', 'Gatra Hitra Wisana', 'Hire Feed', 'Inova Medika', 'Mayora', 'PERSIB Tech', 'PT Amber Solusi Internasional', 'PT BRI Persero', 'PT Deptech Digital Indonesia', 'PT Link Net Tbk', 'Quik Hire', 'SGC Indonesia'];
+    const SUGG = ['linkedin', 'email'];
+    const ST = {
+      wishlist: { label: 'Wishlist', sw: 'var(--gray)' },
+      applied: { label: 'Applied', sw: 'var(--s1)' },
+      assessment: { label: 'Assessment', sw: 'var(--s2)' },
+      interview: { label: 'Interview', sw: 'var(--s3)' },
+      offer: { label: 'Offer', sw: 'var(--good)' },
+      rejected: { label: 'Rejected', sw: 'var(--crit)' },
+      withdrawn: { label: 'Withdrawn', sw: 'var(--gray)' }
+    };
+    const order = ['wishlist', 'applied', 'assessment', 'interview', 'offer', 'rejected', 'withdrawn'];
+
+    const company = st.company || '';
+    const role = st.role || '';
+    const desc = st.desc || '';
+    const url = st.url || '';
+    const loc = st.loc || '';
+    const salary = st.salary || '';
+    const resume = st.resume || '';
+    const applied = st.applied === undefined ? '2026-10-09' : st.applied;
+    const remote = !!st.remote;
+    const status = st.status || 'applied';
+    const tags = st.tags || [];
+    const tagDraft = st.tagDraft || '';
+    const open = !!st.comboOpen;
+    const savedMsg = st.savedMsg || '';
+
+    const q = company.trim().toLowerCase();
+    const exact = COMPANIES.find((n) => n.toLowerCase() === q);
+    const pool = q ? COMPANIES.filter((n) => n.toLowerCase().includes(q)) : COMPANIES;
+    const matches = pool.slice(0, 6).map((n) => ({
+      name: n,
+      choose: (e) => {
+        e.preventDefault();
+        this.setState({ company: n, comboOpen: false });
+      }
+    }));
+    const canCreate = q.length > 0 && !exact;
+
+    const roleOk = role.trim().length > 0;
+    const descOk = desc.trim().length > 0;
+    const doneCount = (roleOk ? 1 : 0) + (descOk ? 1 : 0);
+    const ready = doneCount === 2;
+    const left = 2 - doneCount;
+
+    const stages = order.map((id) => {
+      const on = id === status;
+      return {
+        label: ST[id].label,
+        sw: ST[id].sw,
+        aria: on,
+        bg: on ? 'var(--ink)' : 'var(--card)',
+        fg: on ? 'var(--card)' : 'var(--ink)',
+        swb: on ? 'var(--card)' : 'var(--ink)',
+        pick: () => this.setState({ status: id })
+      };
+    });
+
+    const extraTags = tags.filter((t) => SUGG.indexOf(t) < 0);
+    const tagChips = SUGG.concat(extraTags).map((t) => {
+      const on = tags.indexOf(t) >= 0;
+      return {
+        label: '#' + t,
+        on,
+        bg: on ? 'var(--ink)' : 'var(--card)',
+        fg: on ? 'var(--card)' : 'var(--ink2)',
+        bd: on ? '2px solid var(--ink)' : '2px dashed var(--ink3)',
+        toggle: () => {
+          const cur = (this.state && this.state.tags) || [];
+          this.setState({ tags: cur.indexOf(t) >= 0 ? cur.filter((x) => x !== t) : cur.concat([t]) });
+        }
+      };
+    });
+
+    const fmt = (iso) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) { return ''; }
+      const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1];
+      return mon + ' ' + Number(m[3]) + ', ' + m[1];
+    };
+    const dateText = status === 'wishlist' ? 'Not applied yet' : (fmt(applied) ? 'Applied ' + fmt(applied) : 'No applied date');
+
+    const set = (key) => (e) => this.setState({ [key]: e.target.value });
+
+    return {
+      accent: this.props.accent ?? '#FFD23F',
+
+      company,
+      comboOpen: open,
+      isExisting: !!exact,
+      isNew: q.length > 0 && !exact && !open,
+      canCreate,
+      createLabel: 'Create "' + company.trim() + '"',
+      listTitle: q ? 'Matching companies' : 'Your companies',
+      matches,
+      onCompany: (e) => this.setState({ company: e.target.value, comboOpen: true }),
+      openCombo: () => this.setState({ comboOpen: true }),
+      closeCombo: () => this.setState({ comboOpen: false }),
+      createNew: (e) => {
+        e.preventDefault();
+        const c = ((this.state && this.state.company) || '').trim();
+        this.setState({ company: c, comboOpen: false });
+      },
+
+      role,
+      desc,
+      url,
+      loc,
+      salary,
+      resume,
+      applied,
+      remote,
+      tagDraft,
+      onRole: (e) => this.setState({ role: e.target.value, savedMsg: '' }),
+      onDesc: set('desc'),
+      onUrl: set('url'),
+      onLoc: set('loc'),
+      onSalary: set('salary'),
+      onResume: set('resume'),
+      onApplied: set('applied'),
+      onTagDraft: set('tagDraft'),
+      onTagKey: (e) => {
+        if (e.key !== 'Enter') { return; }
+        e.preventDefault();
+        const s = this.state || {};
+        const v = (s.tagDraft || '').trim().replace(/^#+/, '').toLowerCase().replace(/\s+/g, '-');
+        if (!v) { return; }
+        const cur = s.tags || [];
+        this.setState({ tags: cur.indexOf(v) >= 0 ? cur : cur.concat([v]), tagDraft: '' });
+      },
+      toggleRemote: () => this.setState({ remote: !((this.state && this.state.remote) || false) }),
+      remBg: remote ? 'var(--marker)' : 'var(--paper)',
+      remLeft: remote ? 27 : 3,
+
+      roleReq: { bg: roleOk ? 'var(--good)' : 'var(--marker)', text: roleOk ? 'Done' : 'Required' },
+      descReq: { bg: descOk ? 'var(--good)' : 'var(--marker)', text: descOk ? 'Done' : 'Required' },
+
+      stages,
+      tagChips,
+
+      pct: doneCount * 50,
+      barBg: ready ? 'var(--good)' : 'var(--ink)',
+      doneText: doneCount + ' of 2 required',
+      checks: [
+        { label: 'Role title', ok: roleOk, hint: roleOk ? 'Done' : 'Required', bg: roleOk ? 'var(--good)' : 'var(--card)', bd: roleOk ? '2px solid var(--ink)' : '2px dashed var(--ink3)' },
+        { label: 'Job description', ok: descOk, hint: descOk ? 'Done' : 'Required', bg: descOk ? 'var(--good)' : 'var(--card)', bd: descOk ? '2px solid var(--ink)' : '2px dashed var(--ink3)' }
+      ],
+
+      pv: {
+        role: role.trim() || 'Role title',
+        roleOp: role.trim() ? 1 : 0.4,
+        company: company.trim() || 'Company',
+        companyOp: company.trim() ? 1 : 0.4,
+        city: loc.trim() || 'Location',
+        cityOp: loc.trim() ? 1 : 0.4,
+        date: dateText,
+        salary: salary.trim(),
+        laneText: 'Lands in the ' + ST[status].label + ' lane',
+        laneSw: ST[status].sw
+      },
+      pvTags: tags.map((t) => ({ label: '#' + t })),
+      noTags: tags.length === 0,
+      hasSalary: salary.trim().length > 0,
+
+      ready,
+      notReady: !ready,
+      btnCls: ready ? 'hard' : 'off',
+      barMsg: left === 2 ? 'Role title and job description are required' : (left === 1 ? (roleOk ? 'Job description is still empty' : 'Role title is still empty') : 'Ready to save'),
+      hasSaved: savedMsg.length > 0,
+      savedMsg,
+      saveAnother: () => {
+        const s = this.state || {};
+        const r = (s.role || '').trim();
+        const d = (s.desc || '').trim();
+        if (!r || !d) { return; }
+        const c = (s.company || '').trim();
+        this.setState({
+          company: '', comboOpen: false, role: '', desc: '', url: '', loc: '', salary: '', resume: '',
+          remote: false, status: 'applied', tags: [], tagDraft: '',
+          savedMsg: 'Saved ' + r + (c ? ' at ' + c : '') + '. The form is clear for the next one.'
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

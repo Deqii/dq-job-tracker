@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard, Warm Editorial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #F3E9D6; }
+.ed, .ed * { box-sizing: border-box; }
+.ed a { color: inherit; text-decoration: none; }
+.ed button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; }
+.ed input { font: inherit; color: inherit; }
+.ed input::placeholder { color: var(--ink3); opacity: 1; }
+.ed :focus-visible { outline: 3px solid var(--s3); outline-offset: 3px; }
+.ed input:focus-visible { outline: none; }
+.field { transition: box-shadow .15s ease; }
+.field:focus-within { box-shadow: 4px 4px 0 var(--ink); }
+.nav-b { transition: background-color .15s ease, border-color .15s ease; }
+.nav-b:hover { background: var(--card) !important; border-color: var(--ink) !important; color: var(--ink) !important; }
+.hard { transition: transform .15s ease, box-shadow .15s ease; }
+.hard:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--sh, var(--ink)) !important; }
+.hard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sh, var(--ink)) !important; }
+.btn-fu { transition: transform .15s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease; }
+.btn-fu:hover { transform: translate(-1px, -1px); }
+.btn-fu:active { transform: translate(1px, 1px); }
+.dim-t { transition: opacity .25s ease; }
+.lnk { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; transition: background-color .15s ease; }
+.lnk:hover { background: var(--marker); }
+@keyframes pop { 0% { opacity: 0; transform: scale(.3) rotate(calc(var(--r, 0deg) - 25deg)); } 60% { opacity: 1; transform: scale(1.14) rotate(calc(var(--r, 0deg) + 4deg)); } 100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); } }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ping { 0% { transform: scale(1); opacity: .6; } 80%, 100% { transform: scale(3); opacity: 0; } }
+.stamp { transform: rotate(var(--r, 0deg)); animation: pop .55s cubic-bezier(.2,.9,.3,1.2) backwards; animation-delay: calc(var(--i) * 28ms + 150ms); }
+.sticker { transform: rotate(var(--r, 0deg)); animation: pop .55s cubic-bezier(.2,.9,.3,1.2) backwards; animation-delay: calc(var(--d, 0ms) + 500ms); }
+.bar { transform-origin: left center; animation: grow-x .8s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: var(--d, 0ms); }
+.fade { animation: fade-in .4s ease-out backwards; animation-delay: calc(var(--d, 0ms) + 500ms); }
+.live { position: relative; }
+.live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--s3); animation: ping 1.8s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .stamp, .sticker, .bar, .fade, .live::after { animation: none; }
+  .field, .nav-b, .hard, .btn-fu, .lnk, .dim-t { transition: none; }
+}
+</style>
+</helmet>
+<div class="ed" style="--marker: {{accent}}; --paper: #F3E9D6; --side: #EADFC8; --card: #FFFBF0; --ink: #1D1A16; --ink2: #5E5546; --ink3: #6B6151; --s1: #7C9BFF; --s2: #4A6BFF; --s3: #2A3FD0; --good: #0ca30c; --crit: #d03b3b; --gray: #857B68; --line: #DCCFB4; --track: #E8DCC2; --display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #F3E9D6; color: #1D1A16; font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.45;">
+
+  <aside style="flex: 0 0 248px; background: var(--side); border-right: 2px solid var(--ink); padding: 24px 16px; display: flex; flex-direction: column; gap: 28px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 0 6px;">
+      <div style="width: 42px; height: 42px; border-radius: 13px; background: var(--marker); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transform: rotate(-4deg); display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1A16" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+        <span style="font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; line-height: 1.1;">Job Tracker</span>
+        <span style="font-size: 12.5px; color: var(--ink2);">Application manager</span>
+      </div>
+    </div>
+
+    <nav aria-label="Main" style="display: flex; flex-direction: column; gap: 6px;">
+      <a href="B-Dashboard.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); font-weight: 700;">
+        <span style="display: flex; color: var(--marker);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span>
+        <span style="flex: 1 1 auto;">Dashboard</span>
+      </a>
+      <a class="nav-b" href="B-Applications.dc.html" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg></span>
+        <span style="flex: 1 1 auto;">Applications</span>
+        <span class="sticker" style="--r: -4deg; --d: 0ms; min-width: 28px; height: 22px; padding: 0 8px; border-radius: 11px; border: 2px solid var(--ink); background: var(--marker); color: var(--ink); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">22</span>
+      </a>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path><path d="M9 9v.01"></path><path d="M9 12v.01"></path><path d="M9 15v.01"></path><path d="M9 18v.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Companies</span>
+      </button>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><path d="M7 7h.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Tags</span>
+      </button>
+    </nav>
+
+    <div style="flex: 1 1 auto;"></div>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 16px 6px 0; border-top: 2px dashed var(--ink3);">
+      <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: var(--marker); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; font-size: 16px; flex: 0 0 auto;">T</div>
+      <span style="flex: 1 1 auto; font-weight: 600;">Tio</span>
+      <button type="button" class="nav-b" aria-label="Sign out" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; color: var(--ink2); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 0 32px 48px;">
+
+    <header style="padding: 20px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;">
+      <label class="field" style="flex: 1 1 280px; max-width: 520px; height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: var(--card); border: 2px solid var(--ink); border-radius: 24px; color: var(--ink3);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" aria-label="Search companies, roles, notes" placeholder="Search companies, roles, notes" style="flex: 1 1 auto; min-width: 0; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+        <span style="font-size: 11.5px; font-weight: 600; border: 1.5px solid var(--ink3); border-radius: 7px; padding: 2px 7px; color: var(--ink3);">Ctrl K</span>
+      </label>
+      <button type="button" class="hard" aria-label="Notifications" style="margin-left: auto; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      </button>
+      <a class="hard" href="B-Form.dc.html" style="--sh: var(--marker); height: 48px; padding: 0 22px; border-radius: 24px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); box-shadow: 4px 4px 0 var(--sh); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        <span>New application</span>
+      </a>
+    </header>
+
+    <section style="margin-top: 4px; background: var(--marker); border: 2px solid var(--ink); border-radius: 28px; box-shadow: 6px 6px 0 var(--ink); padding: 34px 36px; display: flex; flex-wrap: wrap; align-items: center; gap: 28px 40px;">
+      <div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+        <h1 style="margin: 0; font-family: var(--display); font-weight: 800; font-size: 60px; line-height: 1; letter-spacing: -0.035em; text-wrap: balance;">Good afternoon, Tio.</h1>
+        <p style="margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink2); max-width: 40ch; text-wrap: pretty;">11 applications are waiting on a follow-up. 2 are in progress: 1 assessment, 1 interview.</p>
+        <div style="display: flex; gap: 12px; max-width: 480px; margin-top: 4px;">
+          <label class="field" style="flex: 1 1 auto; min-width: 0; height: 52px; display: flex; align-items: center; padding: 0 20px; background: var(--card); border: 2px solid var(--ink); border-radius: 26px;">
+            <input type="text" aria-label="Paste a job link or type a company" placeholder="Paste a job link or type a company" style="width: 100%; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+          </label>
+          <button type="button" class="hard" style="--sh: var(--card); height: 52px; padding: 0 24px; border-radius: 26px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); box-shadow: 4px 4px 0 var(--sh); font-weight: 700;">Add</button>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; background: var(--card); border: 2px solid var(--ink); border-radius: 22px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px;">
+          <span style="font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em;">Where your 22 applications stand</span>
+          <span style="font-size: 13px; color: var(--ink3);">One cell per application</span>
+        </div>
+        <div aria-hidden="true" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{tape}}" as="cell" hint-placeholder-count="22">
+            <div class="stamp" style="--i: {{cell.i}}; --r: {{cell.r}}deg; width: 30px; height: 30px; border-radius: 9px; border: 2px solid var(--ink); background: {{cell.bg}}; display: flex; align-items: center; justify-content: center; color: #fff;">
+              <sc-if value="{{cell.isRej}}" hint-placeholder-val="{{ false }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{legend}}" as="lg" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--card); font-size: 13px; font-weight: 600;">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: {{lg.bg}};"></span>
+              <span>{{lg.label}}</span>
+              <span style="font-weight: 800;">{{lg.n}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Key numbers" style="margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 20px;">
+      <div style="background: var(--card); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 4px 4px 0 var(--ink); padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 14px; font-weight: 600; color: var(--ink2);">Applications sent</span>
+        <span style="font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1.05; letter-spacing: -0.035em;">{{kTotal}}</span>
+        <span style="font-size: 13.5px; color: var(--ink3);">19 waiting for a reply</span>
+      </div>
+      <div style="background: var(--card); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 4px 4px 0 var(--ink); padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 14px; font-weight: 600; color: var(--ink2);">Response rate</span>
+        <span style="font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1.05; letter-spacing: -0.035em;">{{kReply}}</span>
+        <div style="height: 12px; border-radius: 6px; background: #DDE4FF; margin: 4px 0; overflow: hidden;">
+          <div class="bar" style="height: 100%; width: 13.6%; background: var(--s2); border-radius: 6px;"></div>
+        </div>
+        <span style="font-size: 13.5px; color: var(--ink3);">3 of 22 replied (any answer)</span>
+      </div>
+      <div style="background: var(--card); border: 2px solid var(--ink); border-radius: 20px; box-shadow: 4px 4px 0 var(--ink); padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 14px; font-weight: 600; color: var(--ink2);">Interview rate</span>
+        <span style="font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1.05; letter-spacing: -0.035em;">{{kInterview}}</span>
+        <div style="height: 12px; border-radius: 6px; background: #DDE4FF; margin: 4px 0; overflow: hidden;">
+          <div class="bar" style="height: 100%; width: 4.5%; background: var(--s2); border-radius: 6px;"></div>
+        </div>
+        <span style="font-size: 13.5px; color: var(--ink3);">1 of 22 reached interview</span>
+      </div>
+      <div style="border: 2px dashed var(--ink); border-radius: 20px; padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 14px; font-weight: 600; color: var(--ink2);">Offers</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span style="font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1.05; letter-spacing: -0.035em;">{{kOffer}}</span>
+          <svg width="56" height="56" viewBox="0 0 48 48" fill="none" stroke="#1D1A16" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8h20v12a10 10 0 0 1-20 0z" style="fill: var(--marker);"></path><path d="M14 12H8a5 5 0 0 0 6 7"></path><path d="M34 12h6a5 5 0 0 1-6 7"></path><path d="M24 30v6"></path><path d="M16 42h16"></path><path d="M19 36h10v6H19z" style="fill: var(--marker);"></path></svg>
+        </div>
+        <span style="font-size: 13.5px; color: var(--ink3);">None yet. 2 are in progress.</span>
+      </div>
+    </section>
+
+    <section style="margin-top: 28px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px;">
+
+      <div style="flex: 1.2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px;">
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px;">
+          <h2 style="margin: 0 0 16px; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">From sent to offer</h2>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <sc-for list="{{funnel}}" as="row" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 12px; height: 40px;">
+                <span style="font-size: 14px; font-weight: 600; color: var(--ink2);">{{row.label}}</span>
+                <div style="position: relative; height: 28px; border-left: 2px solid var(--ink);">
+                  <div class="bar" style="--d: {{row.d}}ms; position: absolute; left: 0; top: 2px; height: 24px; width: {{row.w}}%; background: {{row.bg}}; border-radius: 0 4px 4px 0;"></div>
+                  <div class="fade" style="--d: {{row.d}}ms; position: absolute; top: 0; height: 28px; left: calc({{row.w}}% + 12px); display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                    <span style="font-size: 16px; font-weight: 800;">{{row.n}}</span>
+                    <span style="font-size: 13px; color: var(--ink3);">{{row.note}}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 13px; color: var(--ink3);">Replied counts any answer, including a rejection.</p>
+        </section>
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="live" style="width: 12px; height: 12px; border-radius: 50%; background: var(--s3); flex: 0 0 auto;"></span>
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Interview in progress</h2>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px;">
+            <div style="min-width: 0;">
+              <a class="lnk" href="B-Detail.dc.html" style="display: inline-block; font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: -0.03em; line-height: 1.08;">Gatra Hitra Wisana</a>
+              <div style="margin-top: 4px; font-size: 16px; color: var(--ink2);">Fullstack Programmer</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <span style="display: flex; align-items: center; gap: 6px; padding: 4px 12px 4px 10px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 13px; font-weight: 600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>Jakarta</span>
+              </span>
+              <span class="sticker" style="--r: -3deg; --d: 200ms; padding: 4px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--marker); font-size: 13px; font-weight: 700;">4-5 juta</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 2px dashed var(--line);">
+              <span style="display: flex; color: var(--ink2);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></span>
+              <div style="flex: 1 1 auto; min-width: 0;">
+                <div style="font-size: 13px; color: var(--ink3);">Schedule</div>
+                <div style="font-weight: 700;">Not set</div>
+              </div>
+              <button type="button" class="hard" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; font-size: 14px;">Set schedule</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 0 0; border-top: 2px dashed var(--line);">
+              <span style="display: flex; color: var(--ink2);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
+              <div style="flex: 1 1 auto; min-width: 0;">
+                <div style="font-size: 13px; color: var(--ink3);">Prep notes</div>
+                <div style="font-weight: 700;">Empty</div>
+              </div>
+              <button type="button" class="hard" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; font-size: 14px;">Write notes</button>
+            </div>
+          </div>
+        </section>
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px;">
+          <h2 style="margin: 0 0 16px; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Sources</h2>
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+            <sc-for list="{{sources}}" as="src" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                  <span style="font-weight: 700; font-size: 16px;">{{src.name}}</span>
+                  <span style="display: flex; align-items: baseline; gap: 6px; font-size: 13.5px; color: var(--ink2);">
+                    <span style="font-size: 16px; font-weight: 800; color: var(--ink);">{{src.n}}</span>
+                    <span>applications</span>
+                  </span>
+                </div>
+                <div style="height: 12px; border-radius: 6px; background: var(--track); overflow: hidden;">
+                  <div class="bar" style="height: 100%; width: {{src.w}}%; background: var(--gray); border-radius: 6px;"></div>
+                </div>
+                <span style="font-size: 13.5px; color: var(--ink3);">{{src.note}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 24px;">
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px 8px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Needs follow-up</h2>
+            <span class="sticker" style="--r: -4deg; --d: 100ms; min-width: 32px; height: 26px; padding: 0 10px; border-radius: 13px; border: 2px solid var(--ink); background: var(--marker); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">11</span>
+            <a class="lnk" href="B-Applications.dc.html" style="margin-left: auto; font-size: 14px; font-weight: 700;">See all</a>
+          </div>
+          <p style="margin: 8px 0 8px; font-size: 13px; color: var(--ink3); max-width: 52ch;">Bars fill toward day 30, when an application is marked ghosted.</p>
+          <ul style="margin: 0; padding: 0; list-style: none;">
+            <sc-for list="{{followups}}" as="row" hint-placeholder-count="5">
+              <li style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 2px dashed var(--line);">
+                <div class="dim-t" style="flex: 1 1 auto; min-width: 0; opacity: {{row.op}};">
+                  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                    <div style="min-width: 0;">
+                      <div style="font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; line-height: 1.2;">{{row.company}}</div>
+                      <div style="font-size: 13.5px; color: var(--ink2);">{{row.role}}</div>
+                    </div>
+                    <span style="font-size: 13px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;">{{row.daysLabel}}</span>
+                  </div>
+                  <div style="height: 10px; border-radius: 5px; background: var(--track); margin-top: 10px; overflow: hidden;">
+                    <div class="bar" style="--d: {{row.d}}ms; height: 100%; width: {{row.pct}}%; background: var(--ink); border-radius: 5px;"></div>
+                  </div>
+                </div>
+                <button type="button" class="btn-fu" onClick="{{row.toggle}}" style="flex: 0 0 auto; width: 124px; height: 44px; border-radius: 22px; border: 2px solid var(--ink); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; background: {{row.btnBg}}; color: {{row.btnFg}}; box-shadow: {{row.btnSh}};">
+                  <sc-if value="{{row.notDone}}" hint-placeholder-val="{{ true }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{row.isDone}}" hint-placeholder-val="{{ false }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                  </sc-if>
+                  <span>{{row.label}}</span>
+                </button>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+
+        <section style="background: var(--card); border: 2px solid var(--ink); border-radius: 24px; box-shadow: 4px 4px 0 var(--ink); padding: 22px 24px 8px;">
+          <h2 style="margin: 0 0 8px; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Recent activity</h2>
+          <ul style="margin: 0; padding: 0; list-style: none;">
+            <sc-for list="{{activity}}" as="ev" hint-placeholder-count="5">
+              <li style="display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-top: 2px dashed var(--line);">
+                <div style="flex: 1 1 auto; min-width: 0;">
+                  <div style="font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; line-height: 1.2;">{{ev.company}}</div>
+                  <div style="margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px;">
+                    <span style="font-size: 13.5px; color: var(--ink2);">{{ev.role}}</span>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+                      <span style="padding: 2px 10px; border: 1.5px solid var(--ink); border-radius: 999px; background: {{ev.c1}}; color: {{ev.t1}}; font-size: 12.5px; font-weight: 700;">{{ev.s1}}</span>
+                      <sc-if value="{{ev.isMove}}" hint-placeholder-val="{{ false }}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                        <span style="padding: 2px 10px; border: 1.5px solid var(--ink); border-radius: 999px; background: {{ev.c2}}; color: {{ev.t2}}; font-size: 12.5px; font-weight: 700;">{{ev.s2}}</span>
+                      </sc-if>
+                      <sc-if value="{{ev.flag}}" hint-placeholder-val="{{ false }}">
+                        <span style="display: flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--marker); font-size: 12.5px; font-weight: 700;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                          <span>Future date, please check</span>
+                        </span>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+                <span style="font-size: 13px; font-weight: 700; color: var(--ink2); white-space: nowrap; padding-top: 2px; font-variant-numeric: tabular-nums;">{{ev.date}}</span>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFD23F","options":["#FFD23F","#FFA3C7","#9BE7C4"]},"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ t: 1 }); return; }
+    const start = performance.now();
+    const dur = 1000;
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / dur);
+      this.setState({ t: p });
+      if (p < 1) { this._raf = requestAnimationFrame(tick); }
+    };
+    this._raf = requestAnimationFrame(tick);
+  }
+  componentWillUnmount() {
+    if (this._raf) { cancelAnimationFrame(this._raf); }
+  }
+  renderVals() {
+    const st = this.state || {};
+    const p = typeof st.t === 'number' ? st.t : 0;
+    const e = 1 - Math.pow(1 - p, 3);
+    const done = st.done || {};
+
+    const stages = [
+      { n: 19, bg: 'var(--s1)', rej: false },
+      { n: 1, bg: 'var(--s2)', rej: false },
+      { n: 1, bg: 'var(--s3)', rej: false },
+      { n: 1, bg: 'var(--crit)', rej: true }
+    ];
+    const rots = [-2, 1.5, -0.5, 2, -1, 1];
+    const tape = [];
+    stages.forEach((s) => {
+      for (let k = 0; k < s.n; k++) {
+        const i = tape.length;
+        tape.push({ i, bg: s.bg, r: rots[i % rots.length], isRej: s.rej });
+      }
+    });
+
+    const legend = [
+      { label: 'Applied', n: 19, bg: 'var(--s1)' },
+      { label: 'Assessment', n: 1, bg: 'var(--s2)' },
+      { label: 'Interview', n: 1, bg: 'var(--s3)' },
+      { label: 'Offer', n: 0, bg: 'var(--good)' },
+      { label: 'Rejected', n: 1, bg: 'var(--crit)' }
+    ];
+
+    const funnel = [
+      { label: 'Sent', n: 22, w: 88, bg: 'var(--s1)', d: 0, note: '' },
+      { label: 'Replied', n: 3, w: 12, bg: 'var(--s2)', d: 90, note: '13.6% of sent' },
+      { label: 'Interview', n: 1, w: 4, bg: 'var(--s3)', d: 180, note: '33% of replies' },
+      { label: 'Offer', n: 0, w: 0, bg: 'var(--good)', d: 270, note: 'none yet' }
+    ];
+
+    const sources = [
+      { name: 'LinkedIn', n: 18, w: 100, note: '1 interview (5.6%)' },
+      { name: 'Email', n: 4, w: 22.2, note: 'No interviews yet' }
+    ];
+
+    const fu = [
+      { id: 'mayora', company: 'Mayora', role: 'Junior Developer', days: 26 },
+      { id: 'persib', company: 'PERSIB Tech', role: 'Front-End Engineer', days: 26 },
+      { id: 'inova', company: 'Inova Medika', role: 'Devops & Networking', days: 24 },
+      { id: 'hirefeed', company: 'Hire Feed', role: 'Front-End Developer', days: 23 },
+      { id: 'quikhire', company: 'Quik Hire', role: 'Front-End Developer', days: 23 }
+    ];
+    const followups = fu.map((r, i) => {
+      const isDone = !!done[r.id];
+      return {
+        i,
+        d: 600 + i * 55,
+        company: r.company,
+        role: r.role,
+        daysLabel: r.days + ' days',
+        pct: Math.round((r.days / 30) * 1000) / 10,
+        op: isDone ? 0.45 : 1,
+        label: isDone ? 'Done' : 'Follow up',
+        btnBg: isDone ? 'var(--ink)' : 'var(--card)',
+        btnFg: isDone ? 'var(--card)' : 'var(--ink)',
+        btnSh: isDone ? 'none' : '3px 3px 0 var(--ink)',
+        isDone,
+        notDone: !isDone,
+        toggle: () => {
+          const cur = (this.state && this.state.done) || {};
+          this.setState({ done: { ...cur, [r.id]: !cur[r.id] } });
+        }
+      };
+    });
+
+    const applied = { c: 'var(--s1)', t: 'var(--ink)' };
+    const interview = { c: 'var(--s3)', t: '#fff' };
+    const activity = [
+      { company: 'PERSIB Tech', role: 'Front-End Engineer', s1: 'Applied', c1: applied.c, t1: applied.t, isMove: false, s2: '', c2: 'transparent', t2: 'var(--ink)', date: '1 min ago', flag: false },
+      { company: 'Mayora', role: 'Junior Developer', s1: 'Applied', c1: applied.c, t1: applied.t, isMove: false, s2: '', c2: 'transparent', t2: 'var(--ink)', date: '3 min ago', flag: false },
+      { company: 'Alexwater', role: 'Fullstack Programmer', s1: 'Applied', c1: applied.c, t1: applied.t, isMove: false, s2: '', c2: 'transparent', t2: 'var(--ink)', date: '3 min ago', flag: true },
+      { company: 'Inova Medika', role: 'Devops & Networking', s1: 'Applied', c1: applied.c, t1: applied.t, isMove: false, s2: '', c2: 'transparent', t2: 'var(--ink)', date: '5 min ago', flag: false },
+      { company: 'Gatra Hitra Wisana', role: 'Fullstack Programmer', s1: 'Applied', c1: applied.c, t1: applied.t, isMove: true, s2: 'Interview', c2: interview.c, t2: interview.t, date: '6 min ago', flag: false }
+    ];
+
+    return {
+      accent: this.props.accent ?? '#FFD23F',
+      kTotal: String(Math.round(22 * e)),
+      kReply: (13.6 * e).toFixed(1) + '%',
+      kInterview: (4.5 * e).toFixed(1) + '%',
+      kOffer: '0',
+      tape,
+      legend,
+      funnel,
+      sources,
+      followups,
+      activity
+    };
+  }
+}
+</script>
+</body>
+</html>

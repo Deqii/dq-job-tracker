@@ -17,10 +17,18 @@
     "test:web": "npm run test -w apps/web",
     "lint": "npm run lint -w apps/web && npm run lint -w apps/api",
     "lint:web": "npm run lint -w apps/web",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "design:sync": "node design/tools/extract.mjs",
+    "design:check": "node design/tools/check.mjs",
+    "verify:design": "node design/tools/verify.mjs all",
+    "verify:pixels:init": "node design/tools/verify.mjs pixels --init"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",
+    "pixelmatch": "^8.0.0",
+    "playwright-core": "^1.64.1",
+    "pngjs": "^7.0.0",
+    "postcss": "^8.5.32",
     "prettier": "^3.3.3"
   },
   "engines": {

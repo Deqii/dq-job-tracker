@@ -70,6 +70,16 @@ These come directly from the PRD's non-functional requirements — treat them as
 - **`Application.appliedAt`** is a user-entered applied date, not an event timestamp. Never use it as the only sort key for chronological views.
 - **Keep `PRD.md` in sync.** When a change alters behavior or the Prisma schema, update the matching section of `PRD.md` in the same PR.
 
+# Design (Warm Editorial redesign)
+
+If your project already has an AGENTS.md, paste this section into it instead of replacing the file.
+
+- UI work follows `design/DESIGN.md` (also loaded through `opencode.json` `instructions`). It overrides your own taste.
+- Port one mockup page per task with `/design-port <PageName>`. After any UI change run `/design-verify`.
+- Never edit `design/design.css`, `design/tokens.json`, `design/motion-table.md`, `design/extract-report.txt` or anything in `design/mockups/` and `design/tools/`. If they look wrong, stop and ask.
+- Fix the app until the checks pass. Never change a check, the config or the contract to get a PASS.
+- Report the real check output. Do not claim a page matches the mockup; the maintainer signs off visually.
+
 ## Git workflow
 
 - One feature branch per unit of work; squash to a single commit when merging.

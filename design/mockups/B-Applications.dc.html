@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Applications, Warm Editorial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #F3E9D6; }
+.ed, .ed * { box-sizing: border-box; }
+.ed a { color: inherit; text-decoration: none; }
+.ed button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; }
+.ed input { font: inherit; color: inherit; }
+.ed input::placeholder { color: var(--ink3); opacity: 1; }
+.ed :focus-visible { outline: 3px solid var(--s3); outline-offset: 3px; }
+.ed input:focus-visible { outline: none; }
+.field { transition: box-shadow .15s ease; }
+.field:focus-within { box-shadow: 4px 4px 0 var(--ink); }
+.nav-b { transition: background-color .15s ease, border-color .15s ease; }
+.nav-b:hover { background: var(--card) !important; border-color: var(--ink) !important; color: var(--ink) !important; }
+.hard { transition: transform .15s ease, box-shadow .15s ease; }
+.hard:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--sh, var(--ink)) !important; }
+.hard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sh, var(--ink)) !important; }
+.chip-b { transition: transform .15s ease, box-shadow .15s ease, background-color .2s ease, color .2s ease; }
+.chip-b:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.chip-b:active { transform: translate(1px, 1px); box-shadow: none; }
+.card-b { transition: opacity .25s ease, scale .25s ease, transform .15s ease, box-shadow .15s ease; }
+.card-b:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink) !important; }
+.more-b { transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.more-b:hover { background: var(--marker) !important; transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+.more-b:active { transform: translate(1px, 1px); box-shadow: none; }
+.plus { transition: transform .25s ease; }
+.lnk { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; transition: background-color .15s ease; }
+.lnk:hover { background: var(--marker); }
+.more-b:hover .plus { transform: rotate(90deg); }
+.trophy { transform-origin: 50% 90%; }
+@keyframes pop { 0% { opacity: 0; transform: scale(.3) rotate(calc(var(--r, 0deg) - 25deg)); } 60% { opacity: 1; transform: scale(1.14) rotate(calc(var(--r, 0deg) + 4deg)); } 100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-14px) rotate(-1.5deg); } to { opacity: 1; transform: none; } }
+@keyframes ping { 0% { transform: scale(1); opacity: .6; } 80%, 100% { transform: scale(3); opacity: 0; } }
+@keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 20% { transform: rotate(-10deg); } 45% { transform: rotate(8deg); } 70% { transform: rotate(-5deg); } }
+.sticker { transform: rotate(var(--r, 0deg)); animation: pop .55s cubic-bezier(.2,.9,.3,1.2) backwards; animation-delay: calc(var(--d, 0ms) + 400ms); }
+.card-in { animation: drop-in .5s cubic-bezier(.2,.9,.3,1.1) backwards; animation-delay: calc(var(--i) * 60ms + 150ms); }
+.live { position: relative; }
+.live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--s3); animation: ping 1.8s ease-out infinite; }
+.trophy-box:hover .trophy { animation: wiggle .7s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .sticker, .card-in, .live::after, .trophy-box:hover .trophy { animation: none; }
+  .field, .nav-b, .hard, .chip-b, .card-b, .more-b, .plus, .lnk { transition: none; }
+}
+</style>
+</helmet>
+<div class="ed" style="--marker: {{accent}}; --paper: #F3E9D6; --side: #EADFC8; --card: #FFFBF0; --ink: #1D1A16; --ink2: #5E5546; --ink3: #6B6151; --s1: #7C9BFF; --s2: #4A6BFF; --s3: #2A3FD0; --good: #0ca30c; --crit: #d03b3b; --gray: #857B68; --line: #DCCFB4; --track: #E8DCC2; --display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: #F3E9D6; color: #1D1A16; font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.45;">
+
+  <aside style="flex: 0 0 248px; background: var(--side); border-right: 2px solid var(--ink); padding: 24px 16px; display: flex; flex-direction: column; gap: 28px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 0 6px;">
+      <div style="width: 42px; height: 42px; border-radius: 13px; background: var(--marker); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transform: rotate(-4deg); display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1A16" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+        <span style="font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; line-height: 1.1;">Job Tracker</span>
+        <span style="font-size: 12.5px; color: var(--ink2);">Application manager</span>
+      </div>
+    </div>
+
+    <nav aria-label="Main" style="display: flex; flex-direction: column; gap: 6px;">
+      <a class="nav-b" href="B-Dashboard.dc.html" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span>
+        <span style="flex: 1 1 auto;">Dashboard</span>
+      </a>
+      <a href="B-Applications.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); font-weight: 700;">
+        <span style="display: flex; color: var(--marker);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path></svg></span>
+        <span style="flex: 1 1 auto;">Applications</span>
+        <span class="sticker" style="--r: -4deg; --d: 0ms; min-width: 28px; height: 22px; padding: 0 8px; border-radius: 11px; border: 2px solid var(--ink); background: var(--marker); color: var(--ink); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">22</span>
+      </a>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path><path d="M9 9v.01"></path><path d="M9 12v.01"></path><path d="M9 15v.01"></path><path d="M9 18v.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Companies</span>
+      </button>
+      <button type="button" class="nav-b" style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 16px; border-radius: 23px; border: 2px solid transparent; color: var(--ink2); font-weight: 600;">
+        <span style="display: flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><path d="M7 7h.01"></path></svg></span>
+        <span style="flex: 1 1 auto;">Tags</span>
+      </button>
+    </nav>
+
+    <div style="flex: 1 1 auto;"></div>
+
+    <div style="display: flex; align-items: center; gap: 12px; padding: 16px 6px 0; border-top: 2px dashed var(--ink3);">
+      <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: var(--marker); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; font-size: 16px; flex: 0 0 auto;">T</div>
+      <span style="flex: 1 1 auto; font-weight: 600;">Tio</span>
+      <button type="button" class="nav-b" aria-label="Sign out" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; color: var(--ink2); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 0 32px 48px;">
+
+    <header style="padding: 20px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;">
+      <label class="field" style="flex: 1 1 280px; max-width: 520px; height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: var(--card); border: 2px solid var(--ink); border-radius: 24px; color: var(--ink3);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" aria-label="Search companies, roles, notes" placeholder="Search companies, roles, notes" style="flex: 1 1 auto; min-width: 0; height: 100%; background: transparent; border: 0; font-size: 15px; color: var(--ink);">
+        <span style="font-size: 11.5px; font-weight: 600; border: 1.5px solid var(--ink3); border-radius: 7px; padding: 2px 7px; color: var(--ink3);">Ctrl K</span>
+      </label>
+      <button type="button" class="hard" aria-label="Notifications" style="margin-left: auto; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      </button>
+    </header>
+
+    <div style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px;">
+      <div style="min-width: 0;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;">
+          <h1 style="margin: 0; font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.035em;">Applications</h1>
+          <span class="sticker" style="--r: -5deg; --d: 0ms; padding: 5px 14px; border: 2px solid var(--ink); border-radius: 999px; background: var(--marker); box-shadow: 3px 3px 0 var(--ink); font-size: 14px; font-weight: 800; white-space: nowrap;">22 total</span>
+        </div>
+        <p style="margin: 12px 0 0; font-size: 17px; line-height: 1.5; color: var(--ink2);">19 of them are still waiting at Applied.</p>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 14px;">
+        <button type="button" class="hard" style="height: 48px; padding: 0 20px; border-radius: 24px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+          <span>Export .xlsx</span>
+        </button>
+        <a class="hard" href="B-Form.dc.html" style="--sh: var(--marker); height: 48px; padding: 0 22px; border-radius: 24px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); box-shadow: 4px 4px 0 var(--sh); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+          <span>New application</span>
+        </a>
+      </div>
+    </div>
+
+    <div style="margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px;">
+      <div role="group" aria-label="Filter by source" style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <sc-for list="{{chips}}" as="chip" hint-placeholder-count="3">
+          <button type="button" class="chip-b" aria-pressed="{{chip.aria}}" onClick="{{chip.pick}}" style="height: 42px; padding: 0 8px 0 18px; border-radius: 21px; border: 2px solid var(--ink); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; background: {{chip.bg}}; color: {{chip.fg}};">
+            <span>{{chip.label}}</span>
+            <span style="min-width: 28px; height: 26px; padding: 0 8px; border-radius: 13px; border: 2px solid var(--ink); background: {{chip.cbg}}; color: var(--ink); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{chip.n}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 2px; padding: 3px; background: var(--card); border: 2px solid var(--ink); border-radius: 23px;">
+        <button type="button" aria-pressed="true" style="height: 34px; padding: 0 16px; border-radius: 17px; border: 2px solid var(--ink); background: var(--ink); color: var(--card); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1.5"></rect><rect x="14" y="3" width="7" height="10" rx="1.5"></rect></svg>
+          <span>Board</span>
+        </button>
+        <button type="button" class="nav-b" aria-pressed="false" style="height: 34px; padding: 0 16px; border-radius: 17px; border: 2px solid transparent; color: var(--ink2); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M3 12h18"></path><path d="M3 18h18"></path></svg>
+          <span>Table</span>
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 24px;">
+
+      <div style="flex: 1.45 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 18px; border: 2px dashed var(--ink3); border-radius: 20px; color: var(--ink3);">
+          <span style="width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--ink3); background: var(--gray); flex: 0 0 auto;"></span>
+          <span style="font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em;">Wishlist</span>
+          <span style="margin-left: auto; min-width: 30px; height: 26px; padding: 0 10px; border-radius: 13px; border: 2px dashed var(--ink3); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">0</span>
+        </div>
+
+        <section style="flex: 1 1 auto; background: var(--side); border: 2px solid var(--ink); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 34px;">
+            <span style="width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--ink); background: var(--s1); flex: 0 0 auto;"></span>
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Applied</h2>
+            <span style="min-width: 32px; height: 28px; padding: 0 10px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">19</span>
+            <span style="margin-left: auto; font-size: 13px; color: var(--ink3);">Newest first</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); align-content: start; gap: 14px;">
+            <sc-for list="{{applied}}" as="c" hint-placeholder-count="5">
+              <article class="card-b card-in" style="--i: {{c.i}}; opacity: {{c.op}}; scale: {{c.sc}}; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 3px 3px 0 var(--ink); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="min-width: 0;">
+                  <h3 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em; line-height: 1.2; text-wrap: balance;">{{c.role}}</h3>
+                  <div style="margin-top: 3px; font-size: 14px; color: var(--ink2);">{{c.company}}</div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                  <span style="display: flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 12.5px; font-weight: 600;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span>{{c.city}}</span>
+                  </span>
+                  <span style="padding: 3px 11px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: 12.5px; font-weight: 700;">{{c.tag}}</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding-top: 12px; border-top: 2px dashed var(--line);">
+                  <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">{{c.date}}</span>
+                  <sc-if value="{{c.notFlag}}" hint-placeholder-val="{{ true }}">
+                    <span style="font-size: 13px; color: var(--ink2);">{{c.wait}}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{c.flag}}" hint-placeholder-val="{{ false }}">
+                  <span class="sticker" style="--r: -2deg; --d: 300ms; align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--marker); font-size: 12.5px; font-weight: 700;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <span>Future date, please check</span>
+                  </span>
+                </sc-if>
+              </article>
+            </sc-for>
+            <button type="button" class="more-b card-in" style="--i: 5; min-height: 150px; border: 2px dashed var(--ink); border-radius: 18px; background: transparent; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;">
+              <span class="plus" style="display: flex;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></span>
+              <span style="font-family: var(--display); font-size: 17px; letter-spacing: -0.01em;">Show 14 more</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 18px; background: var(--card); border: 2px solid var(--ink); border-radius: 20px;">
+          <span style="width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--ink); background: var(--s2); flex: 0 0 auto;"></span>
+          <span style="font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em;">Assessment</span>
+          <span style="margin-left: auto; min-width: 30px; height: 26px; padding: 0 10px; border-radius: 13px; border: 2px solid var(--ink); background: var(--paper); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">1</span>
+        </div>
+
+        <section style="background: var(--side); border: 2px solid var(--ink); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 34px;">
+            <span style="width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--ink); background: var(--s3); flex: 0 0 auto;"></span>
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Interview</h2>
+            <span style="min-width: 32px; height: 28px; padding: 0 10px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">1</span>
+            <span style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink2);">
+              <span class="live" style="width: 10px; height: 10px; border-radius: 50%; background: var(--s3); flex: 0 0 auto;"></span>
+              <span>In progress</span>
+            </span>
+          </div>
+          <article class="card-b card-in" style="--i: 6; opacity: {{gatra.op}}; scale: {{gatra.sc}}; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 3px 3px 0 var(--ink); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+              <div style="min-width: 0;">
+                <h3 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em; line-height: 1.2; text-wrap: balance;"><a class="lnk" href="B-Detail.dc.html">Fullstack Programmer</a></h3>
+                <div style="margin-top: 3px; font-size: 14px; color: var(--ink2);">Gatra Hitra Wisana</div>
+              </div>
+              <span class="sticker" style="--r: -3deg; --d: 100ms; padding: 4px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--marker); font-size: 13px; font-weight: 700; white-space: nowrap;">4-5 juta</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <span style="display: flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 12.5px; font-weight: 600;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>Jakarta</span>
+              </span>
+              <span style="padding: 3px 11px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: 12.5px; font-weight: 700;">#linkedin</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding-top: 12px; border-top: 2px dashed var(--line);">
+              <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">Applied 15 Sep</span>
+              <span style="font-size: 13px; color: var(--ink2);">Interview since 9 Oct</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 2px dashed var(--line);">
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+                <span>No schedule set</span>
+              </span>
+              <button type="button" class="hard" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 2px solid var(--ink); background: var(--card); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; font-size: 13.5px;">Set schedule</button>
+            </div>
+          </article>
+        </section>
+
+        <section style="flex: 1 1 auto; min-height: 220px; background: var(--side); border: 2px solid var(--ink); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 34px;">
+            <span style="width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--ink); background: var(--good); flex: 0 0 auto;"></span>
+            <h2 style="margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1;">Offer</h2>
+            <span style="min-width: 32px; height: 28px; padding: 0 10px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">0</span>
+          </div>
+          <div class="trophy-box" style="flex: 1 1 auto; border: 2px dashed var(--ink3); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;">
+            <svg class="trophy" width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="#1D1A16" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8h20v12a10 10 0 0 1-20 0z" style="fill: var(--marker);"></path><path d="M14 12H8a5 5 0 0 0 6 7"></path><path d="M34 12h6a5 5 0 0 1-6 7"></path><path d="M24 30v6"></path><path d="M16 42h16"></path><path d="M19 36h10v6H19z" style="fill: var(--marker);"></path></svg>
+            <div style="font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -0.02em;">No offers yet</div>
+            <div style="font-size: 14px; color: var(--ink2); max-width: 28ch;">Drag a card here when one arrives.</div>
+          </div>
+        </section>
+
+        <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 18px; background: var(--card); border: 2px solid var(--ink); border-radius: 20px;">
+          <span style="width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--ink); background: var(--crit); flex: 0 0 auto;"></span>
+          <span style="font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em;">Rejected</span>
+          <span style="margin-left: auto; min-width: 30px; height: 26px; padding: 0 10px; border-radius: 13px; border: 2px solid var(--ink); background: var(--paper); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">1</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 18px; border: 2px dashed var(--ink3); border-radius: 20px; color: var(--ink3);">
+          <span style="width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--ink3); background: var(--gray); flex: 0 0 auto;"></span>
+          <span style="font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.015em;">Withdrawn</span>
+          <span style="margin-left: auto; min-width: 30px; height: 26px; padding: 0 10px; border-radius: 13px; border: 2px dashed var(--ink3); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">0</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFD23F","options":["#FFD23F","#FFA3C7","#9BE7C4"]},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const cur = st.src || 'all';
+    const dim = (s) => {
+      const m = cur === 'all' || s === cur;
+      return { op: m ? 1 : 0.28, sc: m ? 1 : 0.98 };
+    };
+
+    const defs = [
+      { id: 'all', label: 'All', n: 22 },
+      { id: 'linkedin', label: '#linkedin', n: 18 },
+      { id: 'email', label: '#email', n: 4 }
+    ];
+    const chips = defs.map((d) => {
+      const on = cur === d.id;
+      return {
+        label: d.label,
+        n: d.n,
+        aria: on,
+        bg: on ? 'var(--ink)' : 'var(--card)',
+        fg: on ? 'var(--card)' : 'var(--ink)',
+        cbg: on ? 'var(--marker)' : 'var(--paper)',
+        pick: () => this.setState({ src: d.id })
+      };
+    });
+
+    const raw = [
+      { role: 'Fullstack Programmer', company: 'Alexwater', city: 'Bandung', date: 'Applied 15 Oct', tag: '#email', src: 'email', flag: true, wait: '' },
+      { role: 'Front-End Developer', company: 'PT Deptech Digital Indonesia', city: 'Jakarta', date: 'Applied 28 Sep', tag: '#linkedin', src: 'linkedin', flag: false, wait: 'Waiting 11 days' },
+      { role: 'Software Developer', company: 'SGC Indonesia', city: 'Jakarta', date: 'Applied 28 Sep', tag: '#linkedin', src: 'linkedin', flag: false, wait: 'Waiting 11 days' },
+      { role: 'Fullstack Programmer', company: 'PT Amber Solusi Internasional', city: 'Jakarta', date: 'Applied 28 Sep', tag: '#linkedin', src: 'linkedin', flag: false, wait: 'Waiting 11 days' },
+      { role: 'BRI IT Spesialist', company: 'PT BRI Persero', city: 'Jakarta', date: 'Applied 28 Sep', tag: '#linkedin', src: 'linkedin', flag: false, wait: 'Waiting 11 days' }
+    ];
+    const applied = raw.map((c, i) => {
+      const d = dim(c.src);
+      return { ...c, i, op: d.op, sc: d.sc, notFlag: !c.flag };
+    });
+
+    const g = dim('linkedin');
+    const gatra = { op: g.op, sc: g.sc };
+
+    return {
+      accent: this.props.accent ?? '#FFD23F',
+      chips,
+      applied,
+      gatra
+    };
+  }
+}
+</script>
+</body>
+</html>
