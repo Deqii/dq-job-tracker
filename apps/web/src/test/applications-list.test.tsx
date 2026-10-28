@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -19,14 +19,19 @@ vi.mock('../lib/api', () => {
 
 const { api } = await import('../lib/api');
 const getMock = vi.mocked(api.get);
-const postMock = vi.mocked(api.post);
 
-const applications: Application[] = [
-  {
-    id: 'app-1',
+function makeApplication(
+  id: string,
+  roleTitle: string,
+  status: ApplicationStatus,
+  tag: string,
+  day: number,
+): Application {
+  return {
+    id,
     userId: 'user-1',
-    companyId: 'co-1',
-    roleTitle: 'Engineer',
+    companyId: `co-${id}`,
+    roleTitle,
     jobDescription: 'JD',
     postingUrl: null,
     location: 'Berlin',
@@ -34,14 +39,40 @@ const applications: Application[] = [
     salaryRange: null,
     resumeVersion: null,
     notes: null,
-    currentStatus: ApplicationStatus.APPLIED,
-    appliedAt: '2026-10-01T00:00:00.000Z',
-    createdAt: '2026-10-01T10:00:00.000Z',
-    company: { id: 'co-1', name: 'Acme', website: null, industry: null, notes: null, createdAt: '2026-09-01T00:00:00.000Z' },
-    tags: [],
-    statusHistory: [],
-  },
+    currentStatus: status,
+    appliedAt: `2026-10-${String(day).padStart(2, '0')}T00:00:00.000Z`,
+    createdAt: `2026-10-${String(day).padStart(2, '0')}T10:00:00.000Z`,
+    company: { id: `co-${id}`, name: `Company ${id}`, website: null, industry: null, notes: null, createdAt: '2026-09-01T00:00:00.000Z' },
+    tags: [{ id: `tag-${tag}`, name: tag }],
+    statusHistory: [{ id: `hist-${id}`, status, note: null, changedAt: `2026-10-${String(day).padStart(2, '0')}T10:00:00.000Z` }],
+  };
+}
+
+const applications: Application[] = [
+  makeApplication('app-1', 'Engineer', ApplicationStatus.APPLIED, 'linkedin', 7),
+  makeApplication('app-2', 'Designer', ApplicationStatus.APPLIED, 'email', 6),
+  makeApplication('app-3', 'Developer', ApplicationStatus.APPLIED, 'linkedin', 5),
+  makeApplication('app-4', 'Manager', ApplicationStatus.APPLIED, 'linkedin', 4),
+  makeApplication('app-5', 'Analyst', ApplicationStatus.APPLIED, 'email', 3),
+  makeApplication('app-6', 'Architect', ApplicationStatus.APPLIED, 'linkedin', 2),
+  makeApplication('app-7', 'Tester', ApplicationStatus.APPLIED, 'linkedin', 1),
+  makeApplication('app-8', 'Interviewer', ApplicationStatus.INTERVIEW, 'linkedin', 1),
 ];
+
+const tags = [
+  { id: 'tag-linkedin', name: 'linkedin' },
+  { id: 'tag-email', name: 'email' },
+];
+
+function mockApi(override?: (url: string) => Application[] | undefined) {
+  getMock.mockImplementation((url) => {
+    const custom = override?.(url);
+    if (custom) return Promise.resolve({ data: custom });
+    if (url === '/api/applications') return Promise.resolve({ data: applications });
+    if (url === '/api/tags') return Promise.resolve({ data: tags });
+    return Promise.resolve({ data: [] });
+  });
+}
 
 function renderList() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -57,158 +88,71 @@ function renderList() {
 beforeEach(() => {
   vi.clearAllMocks();
   getMock.mockReset();
-  postMock.mockReset();
 });
 
-describe('Applications list status shortcut', () => {
-  it('Selecting a status sends a POST to /api/applications/<id>/status with exactly { status }', async () => {
-    getMock.mockImplementation((url) => {
-      if (url === '/api/applications') {
-        return Promise.resolve({ data: applications });
-      }
-      if (url === '/api/tags') {
-        return Promise.resolve({ data: [] });
-      }
-      return Promise.resolve({ data: [] });
-    });
-    postMock.mockResolvedValue({ data: { ...applications[0], currentStatus: ApplicationStatus.ASSESSMENT } });
+describe('Applications list', () => {
+  it('renders each application as a link to its detail page', async () => {
+    mockApi();
+    renderList();
 
+    const link = await screen.findByRole('link', { name: /Engineer/ });
+    expect(link).toHaveAttribute('href', '/applications/app-1');
+  });
+
+  it('no longer offers the old inline status shortcut on list cards', async () => {
+    mockApi();
+    renderList();
+
+    await screen.findByRole('link', { name: /Engineer/ });
+    expect(screen.queryByRole('button', { name: /^applied$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('filters cards from a source chip without changing the other chip counts', async () => {
+    mockApi();
     const user = userEvent.setup();
     renderList();
 
-    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
+    await screen.findByRole('link', { name: /Engineer/ });
+    expect(screen.getByRole('button', { name: /#linkedin/ })).toHaveTextContent('6');
 
-    const badge = screen.getByRole('button', { name: /applied/i });
-    await user.click(badge);
+    await user.click(screen.getByRole('button', { name: /#email/ }));
 
-    const assessment = await screen.findByRole('menuitem', { name: /assessment/i });
-    await user.click(assessment);
-
-    await waitFor(() => {
-      expect(postMock).toHaveBeenCalledWith('/api/applications/app-1/status', { status: ApplicationStatus.ASSESSMENT });
-    });
+    expect(await screen.findByRole('link', { name: /Designer/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Analyst/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Engineer/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /#linkedin/ })).toHaveTextContent('6');
   });
 
-  it('The current status is not offered in the menu', async () => {
-    getMock.mockImplementation((url) => {
-      if (url === '/api/applications') {
-        return Promise.resolve({ data: applications });
-      }
-      if (url === '/api/tags') {
-        return Promise.resolve({ data: [] });
-      }
-      return Promise.resolve({ data: [] });
-    });
-
+  it('shows the remaining applied cards when "Show more" is clicked', async () => {
+    mockApi();
     const user = userEvent.setup();
     renderList();
 
-    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
+    await screen.findByRole('link', { name: /Engineer/ });
+    expect(screen.queryByRole('link', { name: /Architect/ })).not.toBeInTheDocument();
 
-    const badge = screen.getByRole('button', { name: /applied/i });
-    await user.click(badge);
+    const more = screen.getByRole('button', { name: /Show 2 more/i });
+    await user.click(more);
 
-    expect(screen.queryByRole('menuitem', { name: /applied/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /Architect/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Tester/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Show .* more/i })).not.toBeInTheDocument();
   });
 
-  it('Clicking the badge does not navigate to the detail page', async () => {
-    getMock.mockImplementation((url) => {
-      if (url === '/api/applications') {
-        return Promise.resolve({ data: applications });
-      }
-      if (url === '/api/tags') {
-        return Promise.resolve({ data: [] });
-      }
-      return Promise.resolve({ data: [] });
-    });
-    postMock.mockResolvedValue({ data: { ...applications[0], currentStatus: ApplicationStatus.ASSESSMENT } });
-
-    const user = userEvent.setup();
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/applications']}>
-          <Routes>
-            <Route path="/applications" element={<ApplicationsPage />} />
-            <Route path="/applications/:id" element={<div>detail page</div>} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-
-    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
-
-    const badge = screen.getByRole('button', { name: /applied/i });
-    await user.click(badge);
-    const assessment = await screen.findByRole('menuitem', { name: /assessment/i });
-    await user.click(assessment);
-
-    await waitFor(() => {
-      expect(postMock).toHaveBeenCalledWith('/api/applications/app-1/status', { status: ApplicationStatus.ASSESSMENT });
-    });
-    expect(screen.queryByText('detail page')).not.toBeInTheDocument();
-  });
-
-  it('A failed change shows the error and the badge still shows the old status and is enabled again', async () => {
-    getMock.mockImplementation((url) => {
-      if (url === '/api/applications') {
-        return Promise.resolve({ data: applications });
-      }
-      if (url === '/api/tags') {
-        return Promise.resolve({ data: [] });
-      }
-      return Promise.resolve({ data: [] });
-    });
-    postMock.mockRejectedValue(new Error('Network error'));
-
+  it('sends the debounced search query and shows only matching cards', async () => {
+    mockApi((url) => (url.includes('search=Designer') ? [applications[1]!] : undefined));
     const user = userEvent.setup();
     renderList();
 
-    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
-
-    const badge = screen.getByRole('button', { name: /applied/i });
-    await user.click(badge);
-
-    const assessment = await screen.findByRole('menuitem', { name: /assessment/i });
-    await user.click(assessment);
+    await screen.findByRole('link', { name: /Engineer/ });
+    await user.type(screen.getByLabelText('Search companies, roles, notes'), 'Designer');
 
     await waitFor(() => {
-      expect(screen.getByText('Network error')).toBeInTheDocument();
+      expect(getMock).toHaveBeenCalledWith('/api/applications?search=Designer');
     });
 
-    expect(screen.getByRole('button', { name: /applied/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /applied/i })).toBeEnabled();
-  });
-
-  it('Pressing Escape in the status menu returns focus to the badge', async () => {
-    getMock.mockImplementation((url) => {
-      if (url === '/api/applications') {
-        return Promise.resolve({ data: applications });
-      }
-      if (url === '/api/tags') {
-        return Promise.resolve({ data: [] });
-      }
-      return Promise.resolve({ data: [] });
-    });
-
-    const user = userEvent.setup();
-    renderList();
-
-    await waitFor(() => expect(screen.getByText('Engineer')).toBeInTheDocument());
-
-    const badge = screen.getByRole('button', { name: /applied/i });
-    await user.click(badge);
-
-    await screen.findByRole('menu');
-    const firstOption = screen.getAllByRole('menuitem')[0]!;
-    await user.keyboard('{ArrowDown}');
-    expect(firstOption).toHaveFocus();
-
-    await user.keyboard('{Escape}');
-
-    await waitFor(() => {
-      expect(screen.queryByRole('menuitem', { name: /assessment/i })).not.toBeInTheDocument();
-    });
-    expect(badge).toHaveFocus();
+    expect(await screen.findByRole('link', { name: /Designer/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Engineer/ })).not.toBeInTheDocument();
   });
 });

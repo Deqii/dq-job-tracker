@@ -173,5 +173,46 @@
     "tags": [
       { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
     ]
+  },
+  {
+    "id": "8f14e45f-ceea-4672-9a4c-0a4b2e9c1d11",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-000000000002",
+    "roleTitle": "Fullstack Programmer",
+    "jobDescription": "Looking for talented professionals to join our team and contribute to a technology project supporting PT Kereta Commuter Indonesia (KAI Commuter).",
+    "postingUrl": "https://www.linkedin.com/",
+    "location": "Jakarta",
+    "isRemote": false,
+    "salaryRange": "4-5 juta",
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "INTERVIEW",
+    "appliedAt": "2026-09-15T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:51:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-000000000002",
+      "name": "Gatra Hitra Wisana",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000001",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:51:00.000Z"
+      },
+      {
+        "id": "e0000000-0000-4000-8000-000000000002",
+        "status": "INTERVIEW",
+        "note": "Interview scheduled.",
+        "changedAt": "2026-10-09T01:52:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+    ]
   }
 ]
