@@ -1,0 +1,239 @@
+{
+  "counts": {
+    "WISHLIST": 0,
+    "APPLIED": 19,
+    "ASSESSMENT": 1,
+    "INTERVIEW": 1,
+    "OFFER": 0,
+    "REJECTED": 1,
+    "WITHDRAWN": 0
+  },
+  "total": 22,
+  "recentActivity": [
+    {
+      "id": "b0000000-0000-4000-8000-000000000001",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "companyId": "c0000000-0000-4000-8000-000000000006",
+      "roleTitle": "Front-End Engineer",
+      "jobDescription": "Stored snapshot for fixture verification.",
+      "postingUrl": null,
+      "location": "Jakarta",
+      "isRemote": false,
+      "salaryRange": null,
+      "resumeVersion": "Resume.pdf",
+      "notes": null,
+      "currentStatus": "APPLIED",
+      "appliedAt": "2026-09-13T02:00:00.000Z",
+      "createdAt": "2026-10-09T01:59:00.000Z",
+      "company": {
+        "id": "c0000000-0000-4000-8000-000000000006",
+        "name": "PERSIB Tech",
+        "website": null,
+        "industry": null,
+        "notes": null,
+        "createdAt": "2026-09-01T00:00:00.000Z"
+      },
+      "statusHistory": [
+        {
+          "id": "e0000000-0000-4000-8000-000000000021",
+          "status": "APPLIED",
+          "note": null,
+          "changedAt": "2026-10-09T01:59:00.000Z"
+        }
+      ],
+      "tags": [
+        { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+      ]
+    },
+    {
+      "id": "b0000000-0000-4000-8000-000000000002",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "companyId": "c0000000-0000-4000-8000-000000000005",
+      "roleTitle": "Junior Developer",
+      "jobDescription": "Stored snapshot for fixture verification.",
+      "postingUrl": null,
+      "location": "Jakarta",
+      "isRemote": false,
+      "salaryRange": null,
+      "resumeVersion": "Resume.pdf",
+      "notes": null,
+      "currentStatus": "APPLIED",
+      "appliedAt": "2026-09-13T02:00:00.000Z",
+      "createdAt": "2026-10-09T01:57:00.000Z",
+      "company": {
+        "id": "c0000000-0000-4000-8000-000000000005",
+        "name": "Mayora",
+        "website": null,
+        "industry": null,
+        "notes": null,
+        "createdAt": "2026-09-01T00:00:00.000Z"
+      },
+      "statusHistory": [
+        {
+          "id": "e0000000-0000-4000-8000-000000000022",
+          "status": "APPLIED",
+          "note": null,
+          "changedAt": "2026-10-09T01:57:00.000Z"
+        }
+      ],
+      "tags": [
+        { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+      ]
+    },
+    {
+      "id": "b0000000-0000-4000-8000-000000000003",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "companyId": "c0000000-0000-4000-8000-000000000001",
+      "roleTitle": "Fullstack Programmer",
+      "jobDescription": "Stored snapshot for fixture verification.",
+      "postingUrl": null,
+      "location": "Bandung",
+      "isRemote": false,
+      "salaryRange": null,
+      "resumeVersion": "Resume.pdf",
+      "notes": null,
+      "currentStatus": "APPLIED",
+      "appliedAt": "2026-10-15T00:00:00.000Z",
+      "createdAt": "2026-10-09T01:57:00.000Z",
+      "company": {
+        "id": "c0000000-0000-4000-8000-000000000001",
+        "name": "Alexwater",
+        "website": null,
+        "industry": null,
+        "notes": null,
+        "createdAt": "2026-09-01T00:00:00.000Z"
+      },
+      "statusHistory": [
+        {
+          "id": "e0000000-0000-4000-8000-000000000023",
+          "status": "APPLIED",
+          "note": null,
+          "changedAt": "2026-10-09T01:57:00.000Z"
+        }
+      ],
+      "tags": [
+        { "id": "d0000000-0000-4000-8000-000000000002", "name": "email" }
+      ]
+    },
+    {
+      "id": "b0000000-0000-4000-8000-000000000004",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "companyId": "c0000000-0000-4000-8000-000000000004",
+      "roleTitle": "Devops & Networking",
+      "jobDescription": "Stored snapshot for fixture verification.",
+      "postingUrl": null,
+      "location": "Jakarta",
+      "isRemote": false,
+      "salaryRange": null,
+      "resumeVersion": "Resume.pdf",
+      "notes": null,
+      "currentStatus": "APPLIED",
+      "appliedAt": "2026-09-15T02:00:00.000Z",
+      "createdAt": "2026-10-09T01:55:00.000Z",
+      "company": {
+        "id": "c0000000-0000-4000-8000-000000000004",
+        "name": "Inova Medika",
+        "website": null,
+        "industry": null,
+        "notes": null,
+        "createdAt": "2026-09-01T00:00:00.000Z"
+      },
+      "statusHistory": [
+        {
+          "id": "e0000000-0000-4000-8000-000000000024",
+          "status": "APPLIED",
+          "note": null,
+          "changedAt": "2026-10-09T01:55:00.000Z"
+        }
+      ],
+      "tags": [
+        { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+      ]
+    },
+    {
+      "id": "8f14e45f-ceea-4672-9a4c-0a4b2e9c1d11",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "companyId": "c0000000-0000-4000-8000-000000000002",
+      "roleTitle": "Fullstack Programmer",
+      "jobDescription": "Looking for talented professionals to join our team and contribute to a technology project supporting PT Kereta Commuter Indonesia (KAI Commuter).",
+      "postingUrl": "https://www.linkedin.com/",
+      "location": "Jakarta",
+      "isRemote": false,
+      "salaryRange": "4-5 juta",
+      "resumeVersion": "Resume.pdf",
+      "notes": null,
+      "currentStatus": "INTERVIEW",
+      "appliedAt": "2026-09-15T00:00:00.000Z",
+      "createdAt": "2026-10-09T01:54:00.000Z",
+      "company": {
+        "id": "c0000000-0000-4000-8000-000000000002",
+        "name": "Gatra Hitra Wisana",
+        "website": null,
+        "industry": null,
+        "notes": null,
+        "createdAt": "2026-09-01T00:00:00.000Z"
+      },
+      "statusHistory": [
+        {
+          "id": "e0000000-0000-4000-8000-000000000025",
+          "status": "APPLIED",
+          "note": null,
+          "changedAt": "2026-10-09T01:48:00.000Z"
+        },
+        {
+          "id": "e0000000-0000-4000-8000-000000000026",
+          "status": "INTERVIEW",
+          "note": "Interview scheduled.",
+          "changedAt": "2026-10-09T01:54:00.000Z"
+        }
+      ],
+      "tags": [
+        { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+      ]
+    }
+  ],
+  "tagStats": [
+    { "name": "linkedin", "total": 18, "responded": 1 },
+    { "name": "email", "total": 4, "responded": 0 }
+  ],
+  "followUps": {
+    "count": 5,
+    "items": [
+      {
+        "id": "f0000000-0000-4000-8000-000000000001",
+        "roleTitle": "Junior Developer",
+        "companyName": "Mayora",
+        "appliedAt": "2026-09-13T02:00:00.000Z",
+        "daysWaiting": 26
+      },
+      {
+        "id": "f0000000-0000-4000-8000-000000000002",
+        "roleTitle": "Front-End Engineer",
+        "companyName": "PERSIB Tech",
+        "appliedAt": "2026-09-13T02:00:00.000Z",
+        "daysWaiting": 26
+      },
+      {
+        "id": "f0000000-0000-4000-8000-000000000003",
+        "roleTitle": "Devops & Networking",
+        "companyName": "Inova Medika",
+        "appliedAt": "2026-09-15T02:00:00.000Z",
+        "daysWaiting": 24
+      },
+      {
+        "id": "f0000000-0000-4000-8000-000000000004",
+        "roleTitle": "Front-End Developer",
+        "companyName": "Hire Feed",
+        "appliedAt": "2026-09-16T02:00:00.000Z",
+        "daysWaiting": 23
+      },
+      {
+        "id": "f0000000-0000-4000-8000-000000000005",
+        "roleTitle": "Front-End Developer",
+        "companyName": "Quik Hire",
+        "appliedAt": "2026-09-16T02:00:00.000Z",
+        "daysWaiting": 23
+      }
+    ]
+  }
+}

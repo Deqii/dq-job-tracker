@@ -7,10 +7,27 @@
   "outDir": "design/.verify",
   "pixel": { "threshold": 0.1, "maxDiffRatio": 0.005, "tileSize": 64, "maxTileRatio": 0.02 },
   "audit": { "ignoreSelectors": [], "extraAllowedColors": [] },
+  "auth": {
+    "localStorage": {
+      "jobtracker.token": "fixture-token",
+      "jobtracker.user": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "email": "tio@example.com",
+        "createdAt": "2026-10-09T01:00:00.000Z"
+      }
+    }
+  },
+  "mock": {
+    "GET /api/dashboard": { "file": "design/fixtures/dashboard.json" },
+    "GET /api/applications": { "file": "design/fixtures/applications.json" },
+    "GET /api/applications/*": { "file": "design/fixtures/application.json" },
+    "GET /api/companies": { "file": "design/fixtures/companies.json" },
+    "GET /api/tags": { "file": "design/fixtures/tags.json" }
+  },
   "routes": [
-    { "name": "dashboard", "path": "/", "waitFor": "main", "reference": "design/reference/dashboard.png", "expectAnimations": ["pop", "grow-x", "fade-in", "ping"] },
-    { "name": "applications", "path": "/applications", "waitFor": "main", "reference": "design/reference/applications.png", "expectAnimations": ["pop", "drop-in-card", "ping"] },
-    { "name": "detail", "path": "/applications/1", "waitFor": "main", "reference": "design/reference/detail.png", "expectAnimations": ["pop", "drop-in-row", "ping"] },
+    { "name": "dashboard", "path": "/dashboard", "waitFor": "main >> text=PERSIB Tech", "reference": "design/reference/dashboard.png", "expectAnimations": ["pop", "grow-x", "fade-in", "ping"] },
+    { "name": "applications", "path": "/applications", "waitFor": "main >> text=PT Deptech Digital Indonesia", "reference": "design/reference/applications.png", "expectAnimations": ["pop", "drop-in-card", "ping"] },
+    { "name": "detail", "path": "/applications/8f14e45f-ceea-4672-9a4c-0a4b2e9c1d11", "waitFor": "main h1:has-text(\"Fullstack Programmer\")", "reference": "design/reference/detail.png", "expectAnimations": ["pop", "drop-in-row", "ping"] },
     { "name": "form", "path": "/applications/new", "waitFor": "main", "reference": "design/reference/form.png", "expectAnimations": ["pop"] }
   ]
 }

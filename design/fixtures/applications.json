@@ -1,0 +1,177 @@
+[
+  {
+    "id": "a0000000-0000-4000-8000-000000000001",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-000000000001",
+    "roleTitle": "Fullstack Programmer",
+    "jobDescription": "Stored snapshot for fixture verification.",
+    "postingUrl": null,
+    "location": "Bandung",
+    "isRemote": false,
+    "salaryRange": null,
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "APPLIED",
+    "appliedAt": "2026-10-15T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:58:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-000000000001",
+      "name": "Alexwater",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000011",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:58:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000002", "name": "email" }
+    ]
+  },
+  {
+    "id": "a0000000-0000-4000-8000-000000000002",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-000000000009",
+    "roleTitle": "Front-End Developer",
+    "jobDescription": "Stored snapshot for fixture verification.",
+    "postingUrl": null,
+    "location": "Jakarta",
+    "isRemote": false,
+    "salaryRange": null,
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "APPLIED",
+    "appliedAt": "2026-09-28T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:58:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-000000000009",
+      "name": "PT Deptech Digital Indonesia",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000012",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:58:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+    ]
+  },
+  {
+    "id": "a0000000-0000-4000-8000-000000000003",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-00000000000c",
+    "roleTitle": "Software Developer",
+    "jobDescription": "Stored snapshot for fixture verification.",
+    "postingUrl": null,
+    "location": "Jakarta",
+    "isRemote": false,
+    "salaryRange": null,
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "APPLIED",
+    "appliedAt": "2026-09-28T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:58:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-00000000000c",
+      "name": "SGC Indonesia",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000013",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:58:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+    ]
+  },
+  {
+    "id": "a0000000-0000-4000-8000-000000000004",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-000000000007",
+    "roleTitle": "Fullstack Programmer",
+    "jobDescription": "Stored snapshot for fixture verification.",
+    "postingUrl": null,
+    "location": "Jakarta",
+    "isRemote": false,
+    "salaryRange": null,
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "APPLIED",
+    "appliedAt": "2026-09-28T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:58:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-000000000007",
+      "name": "PT Amber Solusi Internasional",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000014",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:58:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+    ]
+  },
+  {
+    "id": "a0000000-0000-4000-8000-000000000005",
+    "userId": "00000000-0000-4000-8000-000000000001",
+    "companyId": "c0000000-0000-4000-8000-000000000008",
+    "roleTitle": "BRI IT Spesialist",
+    "jobDescription": "Stored snapshot for fixture verification.",
+    "postingUrl": null,
+    "location": "Jakarta",
+    "isRemote": false,
+    "salaryRange": null,
+    "resumeVersion": "Resume.pdf",
+    "notes": null,
+    "currentStatus": "APPLIED",
+    "appliedAt": "2026-09-28T00:00:00.000Z",
+    "createdAt": "2026-10-09T01:58:00.000Z",
+    "company": {
+      "id": "c0000000-0000-4000-8000-000000000008",
+      "name": "PT BRI Persero",
+      "website": null,
+      "industry": null,
+      "notes": null,
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    "statusHistory": [
+      {
+        "id": "e0000000-0000-4000-8000-000000000015",
+        "status": "APPLIED",
+        "note": null,
+        "changedAt": "2026-10-09T01:58:00.000Z"
+      }
+    ],
+    "tags": [
+      { "id": "d0000000-0000-4000-8000-000000000001", "name": "linkedin" }
+    ]
+  }
+]

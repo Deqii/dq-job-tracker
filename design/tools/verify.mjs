@@ -12,6 +12,10 @@
  *   pixels   screenshot vs reference PNG (pixelmatch). --init writes the reference from the current screenshot
  *   all      audit + anim + reduced + pixels for every route (pixels is skipped when a route has no reference)
  *
+ * Login and data: "auth": { "localStorage": {key: value} } plants a fake session before the page scripts run; "mock": { "GET /api/x": { "file": ... } }
+ * answers API calls from fixtures (the real API is then never contacted, unmocked calls are violations). Both are optional.
+ * A route that redirects (for example to /login) or never shows its "waitFor" selector is a config error (exit 2), never audited.
+ *
  * Exit code: 0 pass | 1 violations | 2 usage / config / environment error.
  * One line per violation, last line:  VERIFY <cmd>: PASS|FAIL (N violations)
  * Chromium: set CHROMIUM_PATH to use a specific browser, otherwise Playwright's own (npx playwright install chromium).
@@ -42,13 +46,38 @@ function loadConfig() {
     pixel: { threshold: 0.1, maxDiffRatio: 0.005, tileSize: 64, maxTileRatio: 0.02 },
     audit: { ignoreSelectors: [], extraAllowedColors: [], deviceScaleFactor: 2, checkFonts: true },
     anim: { allowKeyframes: [], sampleMs: 1500 },
+    auth: null, mock: {}, apiPrefix: '/api/',
   }, user);
   if (flag('--base-url')) cfg.baseURL = flag('--base-url');
   if (!cfg.routes.length) throw new UsageError('config has no routes');
   const only = flag('--route');
   if (only) { cfg.routes = cfg.routes.filter((r) => r.name === only); if (!cfg.routes.length) throw new UsageError(`no route named "${only}"`); }
+  cfg.mocks = compileMocks(cfg);
   return cfg;
 }
+
+// Mock fixtures. "mock": { "GET /api/applications/*": { "file": "design/fixtures/application.json" } }  ("*" = exactly one path segment;
+// "json": <value> is allowed instead of "file"; "status" defaults to 200). Exact paths win over wildcard paths.
+// While "mock" is non-empty the real API is never contacted: a request under "apiPrefix" with no matching mock is answered with
+// 501 and reported as a violation, so a forgotten endpoint (or a write the page tried to send) cannot pass silently.
+function compileMocks(cfg) {
+  const mocks = Object.entries(cfg.mock || {}).map(([key, spec]) => {
+    const m = key.match(/^(GET|POST|PUT|PATCH|DELETE)\s+(\/\S*)$/);
+    if (!m) throw new UsageError(`mock key "${key}" must look like "GET /api/applications/*"`);
+    let body;
+    if (spec && spec.file) {
+      const p = path.resolve(spec.file);
+      if (!fs.existsSync(p)) throw new UsageError(`mock "${key}": fixture not found: ${rel(p)}`);
+      body = fs.readFileSync(p, 'utf8');
+      try { JSON.parse(body); } catch (e) { throw new UsageError(`mock "${key}": ${rel(p)} is not valid JSON (${e.message})`); }
+    } else if (spec && 'json' in spec) body = JSON.stringify(spec.json);
+    else throw new UsageError(`mock "${key}" needs "file" or "json"`);
+    const re = new RegExp('^' + m[2].split('*').map((s) => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]+') + '/?$');
+    return { key, method: m[1], re, stars: (m[2].match(/\*/g) || []).length, status: spec.status || 200, body };
+  });
+  return mocks.sort((a, b) => a.stars - b.stars);
+}
+const unmockedLines = (list) => [...new Set(list)].map((u) => `unmocked API call ${u}: add it to "mock" in design/verify.config.json (with "mock" set the verifier never reaches the real API)`);
 
 // ------------------------------------------------------------------ color / number helpers (Node side)
 const hexTuple = (h) => { h = h.replace('#', ''); if (h.length === 3) h = [...h].map((c) => c + c).join(''); const n = parseInt(h.slice(0, 6), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255, h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1]; };
@@ -91,16 +120,33 @@ const nearestNum = (n, list) => [...list].sort((a, b) => Math.abs(a - n) - Math.
 async function openRoute(browser, cfg, route, { reduced, dsf = 1 }) {
   const context = await browser.newContext({ viewport: cfg.viewport, deviceScaleFactor: dsf, locale: 'en-US', timezoneId: 'Asia/Jakarta', colorScheme: 'light', reducedMotion: reduced ? 'reduce' : 'no-preference' });
   if (cfg.blockExternal) await context.route((url) => !url.href.startsWith(cfg.baseURL) && url.protocol.startsWith('http'), (r) => r.abort());
+  // Fake session: values are written into localStorage before any page script runs (non-string values are JSON-encoded).
+  const session = (cfg.auth && cfg.auth.localStorage) || null;
+  if (session) await context.addInitScript((entries) => { for (const [k, v] of entries) { try { localStorage.setItem(k, v); } catch (e) { /* opaque origin */ } } }, Object.entries(session).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]));
+  const unmocked = [];
+  if (cfg.mocks.length) await context.route((url) => url.pathname.startsWith(cfg.apiPrefix), (r) => {
+    const req = r.request(), u = new URL(req.url());
+    const hit = cfg.mocks.find((m) => m.method === req.method() && m.re.test(u.pathname));
+    if (!hit) { unmocked.push(`${req.method()} ${u.pathname}`); return r.fulfill({ status: 501, contentType: 'application/json', body: '{"error":"not mocked by design/tools/verify.mjs"}' }); }
+    return r.fulfill({ status: hit.status, contentType: 'application/json', body: hit.body });
+  });
   const page = await context.newPage();
   if (cfg.fixedTime && page.clock && page.clock.setFixedTime) await page.clock.setFixedTime(new Date(cfg.fixedTime));
   const url = new URL(route.path, cfg.baseURL).href;
+  const fail = async (msg) => { const extra = unmocked.length ? `; unmocked API calls: ${[...new Set(unmocked)].join(', ')}` : ''; await context.close(); throw new UsageError(`route "${route.name}": ${msg}${extra}`); };
   try { await page.goto(url, { waitUntil: 'load', timeout: 30000 }); }
   catch (e) { await context.close(); throw new UsageError(`cannot open ${url}: ${String(e.message).split('\n')[0]}`); }
-  if (route.waitFor) await page.waitForSelector(route.waitFor, { timeout: 15000 });
+  if (route.waitFor) {
+    try { await page.waitForSelector(route.waitFor, { timeout: 15000 }); }
+    catch (e) { await fail(`"${route.waitFor}" never appeared; the page is at ${new URL(page.url()).pathname} (expected ${new URL(url).pathname}). Not logged in ("auth"), a wrong id in "path", or the page crashed`); }
+  }
+  // A SPA redirect (guard -> /login, "/" -> /dashboard, unknown id -> 404 page) must never be audited as if it were the route.
+  const norm = (p) => p.replace(/\/+$/, '') || '/';
+  if (!route.allowRedirect && norm(new URL(page.url()).pathname) !== norm(new URL(url).pathname)) await fail(`${new URL(url).pathname} redirected to ${new URL(page.url()).pathname}; fix "path" (use the final URL), fix "auth", or set "allowRedirect": true`);
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: '* { caret-color: transparent !important; }' });
   if (route.settleMs) await page.waitForTimeout(route.settleMs);
-  return { context, page };
+  return { context, page, unmocked };
 }
 
 // ------------------------------------------------------------------ audit
@@ -159,13 +205,13 @@ function auditRows(rows, al) {
 }
 
 async function runAudit(browser, cfg, route, al) {
-  const { context, page } = await openRoute(browser, cfg, route, { reduced: false, dsf: cfg.audit.deviceScaleFactor });
+  const { context, page, unmocked } = await openRoute(browser, cfg, route, { reduced: false, dsf: cfg.audit.deviceScaleFactor });
   const { rows, scanned } = await page.evaluate(pageAudit, { ignore: [...cfg.audit.ignoreSelectors, ...(route.ignoreSelectors || [])] });
   // The computed font-family is only the declared stack, so a web font that failed to load (typo in the URL, blocked CDN,
   // missing @import) is invisible above: the browser quietly uses a system font. Ask the browser which faces really loaded.
   const loaded = cfg.audit.checkFonts === false ? null : new Set(await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/['"]/g, '').trim().toLowerCase())));
   await context.close();
-  const lines = auditRows(rows, al);
+  const lines = [...unmockedLines(unmocked), ...auditRows(rows, al)];
   if (loaded) for (const fam of al.webFonts) if (!loaded.has(fam)) lines.push(`web font "${fam}" is not loaded, text silently falls back to a system font (load it with the @import in design.css or a self-hosted @font-face). Loaded now: ${[...loaded].join(', ') || 'none'}`);
   return { lines, info: `scanned ${scanned} visible elements${loaded ? `; web fonts loaded: ${[...loaded].join(', ') || 'none'}` : ''}` };
 }
@@ -208,11 +254,11 @@ async function sampleAnimations(page, ms) {
   }, { ms });
 }
 async function runAnim(browser, cfg, route) {
-  const { context, page } = await openRoute(browser, cfg, route, { reduced: false });
+  const { context, page, unmocked } = await openRoute(browser, cfg, route, { reduced: false });
   const kf = await page.evaluate(pageKeyframes, { cssText: fs.readFileSync(path.resolve(cfg.css), 'utf8') });
   const seen = await sampleAnimations(page, cfg.anim.sampleMs);
   await context.close();
-  const lines = [], design = new Map(kf.design), allow = new Set(cfg.anim.allowKeyframes);
+  const lines = unmockedLines(unmocked), design = new Map(kf.design), allow = new Set(cfg.anim.allowKeyframes);
   for (const [name, body] of kf.app) {
     if (allow.has(name)) continue;
     if (!design.has(name)) lines.push(`@keyframes ${name} is not in design.css (a new animation was invented)`);
@@ -251,11 +297,11 @@ function pageReduced({ ignore }) {
   return { running, rows };
 }
 async function runReduced(browser, cfg, route) {
-  const { context, page } = await openRoute(browser, cfg, route, { reduced: true });
+  const { context, page, unmocked } = await openRoute(browser, cfg, route, { reduced: true });
   await page.waitForTimeout(300);
   const { running, rows } = await page.evaluate(pageReduced, { ignore: [...cfg.audit.ignoreSelectors, ...(route.ignoreSelectors || [])] });
   await context.close();
-  const lines = [], groups = new Map();
+  const lines = unmockedLines(unmocked), groups = new Map();
   for (const r of rows) { const k = `${r.prop}\u0000${r.value}`; if (!groups.has(k)) groups.set(k, { ...r, count: 0, ex: [] }); const g = groups.get(k); g.count++; if (g.ex.length < 3) g.ex.push(r.path); }
   for (const g of groups.values()) lines.push(`${g.prop} ${g.value} under prefers-reduced-motion  x${g.count}  e.g. ${g.ex.join(' | ')}  -> must be 0s / none`);
   if (running.length) lines.push(`${running.length} animation(s) still running under prefers-reduced-motion: ${[...new Set(running.map((r) => r.name))].join(', ')}  e.g. ${running.slice(0, 3).map((r) => r.path).join(' | ')}`);
@@ -265,17 +311,18 @@ async function runReduced(browser, cfg, route) {
 // ------------------------------------------------------------------ pixels
 const crop = (png, w, h) => { if (png.width === w && png.height === h) return png.data; const out = Buffer.alloc(w * h * 4); for (let y = 0; y < h; y++) png.data.copy(out, y * w * 4, y * png.width * 4, y * png.width * 4 + w * 4); return out; };
 async function runPixels(browser, cfg, route, init) {
-  const { context, page } = await openRoute(browser, cfg, route, { reduced: true });
+  const { context, page, unmocked } = await openRoute(browser, cfg, route, { reduced: true });
   const shot = await page.screenshot({ fullPage: route.fullPage !== false, animations: 'disabled', caret: 'hide' });
   await context.close();
   const outDir = path.resolve(cfg.outDir); fs.mkdirSync(outDir, { recursive: true });
   const actual = PNG.sync.read(shot);
   fs.writeFileSync(path.join(outDir, `${route.name}.actual.png`), shot);
   const refPath = path.resolve(route.reference || `design/reference/${route.name}.png`);
+  if (init && unmocked.length) return { lines: [...unmockedLines(unmocked), `reference NOT written (the page was captured with failed API calls)`], info: '' };
   if (init) { fs.mkdirSync(path.dirname(refPath), { recursive: true }); fs.writeFileSync(refPath, shot); return { lines: [], info: `reference written: ${rel(refPath)} (${actual.width}x${actual.height})` }; }
   if (!fs.existsSync(refPath)) return { skipped: `no reference at ${rel(refPath)} (create one: node design/tools/verify.mjs pixels --route ${route.name} --init)` };
   const ref = PNG.sync.read(fs.readFileSync(refPath));
-  const lines = [];
+  const lines = unmockedLines(unmocked);
   if (actual.width !== ref.width || actual.height !== ref.height) lines.push(`size mismatch: actual ${actual.width}x${actual.height} vs reference ${ref.width}x${ref.height} (comparing the overlapping region)`);
   const w = Math.min(actual.width, ref.width), h = Math.min(actual.height, ref.height);
   const diff = new PNG({ width: w, height: h });

@@ -11,7 +11,6 @@
  * Usage (repo root):  node design/tools/check.mjs [--dir design]       Exit: 0 ok | 1 problems | 2 cannot run
  */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -29,12 +28,15 @@ for (const f of [...GENERATED, 'DESIGN.md']) if (!fs.existsSync(path.join(DIR, f
 if (!fs.existsSync(path.join(DIR, 'mockups'))) { console.error(`check: missing ${path.relative(process.cwd(), path.join(DIR, 'mockups'))}`); process.exit(2); }
 
 // ---- 1. contract fresh
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'design-check-'));
+// Scratch folder INSIDE the project (design/.verify is gitignored), never the OS temp dir: some repos forbid writing outside the project.
+fs.mkdirSync(path.join(DIR, '.verify'), { recursive: true });
+const tmp = fs.mkdtempSync(path.join(DIR, '.verify', 'check-'));
 const r = spawnSync(process.execPath, [EXTRACT, '--mockups', path.join(DIR, 'mockups'), '--out', tmp], { encoding: 'utf8' });
-if (r.status !== 0) { console.error(`check: extract.mjs failed (exit ${r.status}):\n${(r.stdout + r.stderr).trim().split('\n').slice(-12).join('\n')}`); process.exit(r.status === 2 ? 1 : 2); }
+if (r.status !== 0) { console.error(`check: extract.mjs failed (exit ${r.status}):\n${(r.stdout + r.stderr).trim().split('\n').slice(-12).join('\n')}`); fs.rmSync(tmp, { recursive: true, force: true }); process.exit(r.status === 2 ? 1 : 2); }
+// Line endings are not compared: a Windows checkout with git autocrlf turns every LF into CRLF, which is not an edit.
+const lf = (buf) => buf.toString('utf8').replace(/\r\n/g, '\n');
 for (const f of GENERATED) {
-  const want = fs.readFileSync(path.join(tmp, f));
-  if (!want.equals(fs.readFileSync(path.join(DIR, f)))) bad(`${f} is not what the mockups produce: it was edited by hand, or a mockup changed. Fix: restore it (git checkout) or, if the mockups changed on purpose, run npm run design:sync and review the diff.`);
+  if (lf(fs.readFileSync(path.join(tmp, f))) !== lf(fs.readFileSync(path.join(DIR, f)))) bad(`${f} is not what the mockups produce: it was edited by hand, or a mockup changed. Fix: restore it (git checkout) or, if the mockups changed on purpose, run npm run design:sync and review the diff.`);
 }
 fs.rmSync(tmp, { recursive: true, force: true });
 
