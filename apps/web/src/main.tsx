@@ -5,7 +5,9 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { AuthProvider } from './hooks/AuthProvider';
+// Tailwind base first, then the generated design contract so its globals win.
 import './index.css';
+import '../../../design/design.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
