@@ -27,18 +27,21 @@ beforeEach(() => {
 });
 
 describe('icon-only buttons expose accessible names', () => {
-  it('the logout button exposes its accessible name', () => {
+  it('the sign-out button exposes its accessible name', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
-        <AuthProvider>
-          <Routes>
-            <Route element={<Layout />} path="/" />
-          </Routes>
-        </AuthProvider>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AuthProvider>
+            <Routes>
+              <Route element={<Layout />} path="/" />
+            </Routes>
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 
   it('company card icon actions include the company name', async () => {
