@@ -71,15 +71,14 @@ describe('ApplicationDetailPage', () => {
     postMock.mockResolvedValue({ data: application } as never);
   });
 
-  it('shows tags section and save/cancel only when dirty', async () => {
+  it('removes a tag immediately through PATCH and has no separate save control', async () => {
     const user = userEvent.setup();
     renderDetail();
     await screen.findByRole('button', { name: /Remove tag frontend/i });
     expect(screen.queryByRole('button', { name: /save tags/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Remove tag frontend/i }));
-    expect(screen.getByRole('button', { name: /save tags/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    await waitFor(() => expect(patchMock).toHaveBeenCalledTimes(1));
   });
 
   it('saves tags by sending exactly { tags } to PATCH /api/applications/:id', async () => {
@@ -88,7 +87,6 @@ describe('ApplicationDetailPage', () => {
 
     await screen.findByRole('button', { name: 'Remove tag frontend' });
     await user.click(screen.getByRole('button', { name: 'Remove tag frontend' }));
-    await user.click(screen.getByRole('button', { name: /save tags/i }));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalledTimes(1));
     // The API replaces the whole tag set, so the body is the full selection and
@@ -98,7 +96,7 @@ describe('ApplicationDetailPage', () => {
     expect(Object.keys(body)).toEqual(['tags']);
   });
 
-  it('keeps the edited tags on screen and re-enables Save/Cancel when the save fails', async () => {
+  it('restores the previous tags and shows an alert when the save fails', async () => {
     const user = userEvent.setup();
     patchMock.mockRejectedValueOnce(new Error('Tags could not be saved'));
     renderDetail();
@@ -106,27 +104,24 @@ describe('ApplicationDetailPage', () => {
     await screen.findByRole('button', { name: 'Remove tag frontend' });
     await user.click(screen.getByRole('button', { name: 'Remove tag frontend' }));
 
-    const save = screen.getByRole('button', { name: /save tags/i });
-    const cancel = screen.getByRole('button', { name: /cancel/i });
-    await user.click(save);
-
     await screen.findByRole('alert');
 
-    // The edit survives the failure, so the user can retry or discard it.
+    // The failed edit is rolled back, so the screen shows the persisted set.
+    expect(screen.getByRole('alert')).toHaveTextContent('Tags could not be saved');
+    expect(screen.getByRole('button', { name: 'Remove tag frontend' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove tag urgent' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Remove tag frontend' })).not.toBeInTheDocument();
-    expect(save).toBeEnabled();
-    expect(cancel).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Remove tag frontend' })).toBeEnabled();
+    expect(screen.getByLabelText('Add a tag')).toBeEnabled();
   });
 
   it('sends { status, note } to POST /api/applications/:id/status and keeps both when the change fails', async () => {
     const user = userEvent.setup();
     renderDetail();
 
-    const statusSelect = await screen.findByRole('combobox', { name: 'New status' });
+    const interview = await screen.findByRole('button', { name: 'Interview' });
     const noteInput = screen.getByLabelText(/note \(optional\)/i);
 
-    await user.selectOptions(statusSelect, ApplicationStatus.INTERVIEW);
+    await user.click(interview);
     await user.type(noteInput, 'Next round on Thursday');
     await user.click(screen.getByRole('button', { name: /update/i }));
 
@@ -138,7 +133,7 @@ describe('ApplicationDetailPage', () => {
 
     // Now the same change, but the API refuses it.
     postMock.mockRejectedValueOnce(new Error('Status could not be changed'));
-    await user.selectOptions(statusSelect, ApplicationStatus.INTERVIEW);
+    await user.click(interview);
     await user.type(noteInput, 'Second round on Friday');
     await user.click(screen.getByRole('button', { name: /update/i }));
 
@@ -148,7 +143,7 @@ describe('ApplicationDetailPage', () => {
       note: 'Second round on Friday',
     });
     // A failed change must not clear the form.
-    expect(statusSelect).toHaveValue(ApplicationStatus.INTERVIEW);
+    expect(interview).toHaveAttribute('aria-pressed', 'true');
     expect(noteInput).toHaveValue('Second round on Friday');
     expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
   });
@@ -158,7 +153,7 @@ describe('ApplicationDetailPage', () => {
     renderDetail();
 
     const textarea = await screen.findByPlaceholderText(
-      'Interviewer names, prep notes, anything to remember...',
+      'Interviewer names, prep notes, anything to remember…',
     );
     await user.type(textarea, 'Ask about the on-call rotation');
     await user.click(screen.getByRole('button', { name: /save notes/i }));
@@ -172,23 +167,23 @@ describe('ApplicationDetailPage', () => {
     expect(Object.keys(body)).toEqual(['notes']);
   });
 
-  it('keeps the typed notes on screen and re-enables Save/Cancel when the save fails', async () => {
+  it('keeps the typed notes on screen and re-enables Save when the save fails', async () => {
     const user = userEvent.setup();
     patchMock.mockRejectedValueOnce(new Error('Notes could not be saved'));
     renderDetail();
 
     const textarea = await screen.findByPlaceholderText(
-      'Interviewer names, prep notes, anything to remember...',
+      'Interviewer names, prep notes, anything to remember…',
     );
     await user.type(textarea, 'Draft that must survive a failure');
     const save = screen.getByRole('button', { name: /save notes/i });
-    const cancel = screen.getByRole('button', { name: /cancel/i });
     await user.click(save);
 
     await screen.findByRole('alert');
-    // The failure keeps the text, so the user can retry or cancel.
+    // The failure keeps the text, so the user can retry.
+    expect(screen.getByRole('alert')).toHaveTextContent('Notes could not be saved');
     expect(textarea).toHaveValue('Draft that must survive a failure');
     expect(save).toBeEnabled();
-    expect(cancel).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument();
   });
 });
