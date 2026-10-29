@@ -1,3 +1,4 @@
+// TODO(legacy): PageLoader and ButtonLoader still use the pre-redesign Tailwind palette; not drawn in the mockup.
 // TODO: the design contract has no spin motion token; keep this glyph static until one exists.
 export function Spinner({ className = 'h-6 w-6' }: { className?: string }) {
   return (

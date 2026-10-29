@@ -1,3 +1,4 @@
+// TODO(legacy): the modal still uses the pre-redesign Tailwind palette (including a blurred backdrop); not drawn in the mockup.
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
