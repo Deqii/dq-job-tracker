@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,6 +14,12 @@ vi.mock('../lib/api', () => {
     getErrorMessage: (err: unknown) => (err instanceof Error ? err.message : 'error'),
   };
 });
+
+vi.mock('../hooks/auth-context', () => ({
+  useAuth: () => ({
+    user: { id: 'user-1', email: 'tio@example.com', createdAt: '2026-01-01T00:00:00.000Z' },
+  }),
+}));
 
 const { api } = await import('../lib/api');
 const getMock = vi.mocked(api.get);
@@ -55,26 +61,36 @@ beforeEach(() => {
 
 describe('Dashboard by tag card', () => {
   it('renders one row per tag with the total and the responded share', async () => {
-    getMock.mockResolvedValue({
-      data: dashboard([
-        { name: 'linkedin', total: 3, responded: 1 },
-        { name: 'email', total: 2, responded: 2 },
-      ]),
+    getMock.mockImplementation(async (url: string) => {
+      if (url === '/api/applications') return { data: [] };
+      return {
+        data: dashboard([
+          { name: 'linkedin', total: 3, responded: 1 },
+          { name: 'email', total: 2, responded: 2 },
+        ]),
+      };
     });
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('By tag')).toBeInTheDocument());
-    expect(screen.getByText('#linkedin')).toBeInTheDocument();
-    expect(screen.getByText('3 applications')).toBeInTheDocument();
-    expect(screen.getByText('1 responded (33%)')).toBeInTheDocument();
-    expect(screen.getByText('#email')).toBeInTheDocument();
-    expect(screen.getByText('2 applications')).toBeInTheDocument();
-    expect(screen.getByText('2 responded (100%)')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Sources')).toBeInTheDocument());
+    const linkedin = screen.getByText('linkedin').closest('div')?.parentElement as HTMLElement;
+    expect(within(linkedin).getByText('3')).toBeInTheDocument();
+    expect(within(linkedin).getByText('applications')).toBeInTheDocument();
+    expect(screen.getByText('1 interview (33.3%)')).toBeInTheDocument();
+    const email = screen.getByText('email').closest('div')?.parentElement as HTMLElement;
+    expect(within(email).getByText('2')).toBeInTheDocument();
+    expect(within(email).getByText('applications')).toBeInTheDocument();
+    expect(screen.getByText('2 interviews (100.0%)')).toBeInTheDocument();
+    expect(screen.queryByText('#linkedin')).not.toBeInTheDocument();
+    expect(screen.queryByText('#email')).not.toBeInTheDocument();
   });
 
   it('shows the empty state when the dashboard carries no tags', async () => {
-    getMock.mockResolvedValue({ data: dashboard() });
+    getMock.mockImplementation(async (url: string) => {
+      if (url === '/api/applications') return { data: [] };
+      return { data: dashboard() };
+    });
 
     renderPage();
 

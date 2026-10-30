@@ -20,11 +20,42 @@ export interface DashboardViewModel extends DashboardStats {
   responseRate: number | null;
 }
 
+export function replyCountOf(counts: DashboardCounts): number {
+  return (
+    counts[ApplicationStatus.ASSESSMENT] +
+    counts[ApplicationStatus.INTERVIEW] +
+    counts[ApplicationStatus.OFFER] +
+    counts[ApplicationStatus.REJECTED]
+  );
+}
+
+export function interviewCountOf(counts: DashboardCounts): number {
+  return counts[ApplicationStatus.INTERVIEW] + counts[ApplicationStatus.OFFER];
+}
+
 export function responseRateOf(counts: DashboardCounts, total: number): number | null {
   if (total === 0) return null;
-  const responded =
-    counts[ApplicationStatus.INTERVIEW] + counts[ApplicationStatus.OFFER];
-  return (responded / total) * 100;
+  return (replyCountOf(counts) / total) * 100;
+}
+
+export function interviewRateOf(counts: DashboardCounts, total: number): number | null {
+  if (total === 0) return null;
+  return (interviewCountOf(counts) / total) * 100;
+}
+
+export function tapeCountsOf(
+  counts: DashboardCounts,
+  cap = 120,
+): Record<ApplicationStatus, number> {
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (total <= cap) return { ...counts };
+
+  const scaled = {} as Record<ApplicationStatus, number>;
+  for (const status of Object.keys(counts) as ApplicationStatus[]) {
+    const count = counts[status];
+    scaled[status] = count > 0 ? Math.max(1, Math.round((count * cap) / total)) : 0;
+  }
+  return scaled;
 }
 
 export function useDashboard() {

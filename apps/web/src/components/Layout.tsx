@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactElement } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/auth-context';
 import { useDashboard } from '../hooks/useDashboard';
@@ -27,10 +27,11 @@ const NAV_ICONS: Record<string, ReactElement> = {
   ),
 };
 
-function displayName(email: string | undefined): string {
+function displayName(email: string | undefined, capitalizeFirst = false): string {
   if (!email) return '?';
   const local = email.split('@')[0] ?? email;
-  return local || '?';
+  if (!local) return '?';
+  return capitalizeFirst ? local.charAt(0).toUpperCase() + local.slice(1) : local;
 }
 
 // TODO(legacy): kept only for below-lg widths. Remove once the mobile shell is redesigned.
@@ -113,8 +114,15 @@ export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { data: dashboard } = useDashboard();
+  const location = useLocation();
   const total = dashboard?.total ?? 0;
-  const name = displayName(user?.email);
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
+  const name = displayName(user?.email, true);
+  const stickerBase = isDashboard
+    ? '500ms'
+    : location.pathname.startsWith('/applications/')
+      ? '300ms'
+      : '400ms';
 
   const handleLogout = () => {
     logout();
@@ -136,7 +144,7 @@ export function Layout() {
         </button>
       </header>
 
-      <div className="ed" style={{ '--sticker-base': '400ms' } as CSSProperties}>
+      <div className="ed" style={{ '--sticker-base': stickerBase } as CSSProperties}>
         <div className="hidden lg:flex">
           <aside style={{ flex: '0 0 248px', background: 'var(--side)', borderRight: '2px solid var(--ink)', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 6px' }}>
