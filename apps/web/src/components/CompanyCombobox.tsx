@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent, MutableRefObject } from 'react';
+import type { CSSProperties, KeyboardEvent, MutableRefObject } from 'react';
 
 import type { Company } from '../types';
-import { IconBuilding, IconPlus } from './Icons';
 
 type ComboboxOption =
   | { kind: 'company'; optionId: string; label: string; company: Company }
   | { kind: 'create'; optionId: string; label: string; name: string };
 
-const MAX_VISIBLE = 8;
+const MAX_VISIBLE = 6;
 
 export interface CompanyComboboxProps {
   companies: Company[];
@@ -18,12 +17,13 @@ export interface CompanyComboboxProps {
   errorMessage?: string;
   disabled?: boolean;
   inputRef?: MutableRefObject<HTMLInputElement | null>;
+  onTextChange?: (text: string) => void;
 }
 
 /**
  * Editable combobox over the user's existing companies. Typing filters
- * case-insensitively; when nothing matches, a "Create" option is offered so a
- * brand-new company can be registered without leaving the application form.
+ * case-insensitively; when the exact name does not exist yet, a "Create" row
+ * sits alongside the matches so a new company can be registered inline.
  */
 export function CompanyCombobox({
   companies,
@@ -33,6 +33,7 @@ export function CompanyCombobox({
   errorMessage,
   disabled = false,
   inputRef,
+  onTextChange,
 }: CompanyComboboxProps) {
   const listboxId = 'company-combobox-listbox';
   const errorId = 'company-combobox-error';
@@ -45,6 +46,8 @@ export function CompanyCombobox({
   const lastValueRef = useRef(value);
   const companiesRef = useRef(companies);
   companiesRef.current = companies;
+  const onTextChangeRef = useRef(onTextChange);
+  onTextChangeRef.current = onTextChange;
 
   // Re-sync the visible text whenever the selection is changed from the outside
   // (preselected company, or a form reset). Typing sets lastValueRef itself so
@@ -53,7 +56,9 @@ export function CompanyCombobox({
     if (lastValueRef.current === value) return;
     lastValueRef.current = value;
     const selected = companiesRef.current.find((company) => company.id === value);
-    setText(selected?.name ?? '');
+    const next = selected?.name ?? '';
+    setText(next);
+    onTextChangeRef.current?.(next);
     if (!selected) setOpen(false);
   }, [value]);
 
@@ -61,11 +66,14 @@ export function CompanyCombobox({
     lastValueRef.current = companyId;
     onChange(companyId);
     setText(name);
+    onTextChangeRef.current?.(name);
     setOpen(false);
   };
 
+  const query = text.trim().toLowerCase();
+  const exact = companies.find((company) => company.name.toLowerCase() === query);
+
   const options = useMemo<ComboboxOption[]>(() => {
-    const query = text.trim().toLowerCase();
     const matches = companies
       .filter((company) => company.name.toLowerCase().includes(query))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -77,8 +85,7 @@ export function CompanyCombobox({
       company,
     }));
 
-    const alreadyExists = matches.length > 0;
-    if (text.trim() !== '' && !alreadyExists) {
+    if (query !== '' && !exact) {
       visible.push({
         kind: 'create',
         optionId: 'company-option-create',
@@ -88,7 +95,7 @@ export function CompanyCombobox({
     }
 
     return visible;
-  }, [companies, text]);
+  }, [companies, query, exact, text]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -96,6 +103,7 @@ export function CompanyCombobox({
 
   const handleChange = (next: string) => {
     setText(next);
+    onTextChangeRef.current?.(next);
     setOpen(true);
     if (value !== '') {
       lastValueRef.current = '';
@@ -156,15 +164,31 @@ export function CompanyCombobox({
   };
 
   const activeOptionId = open && options.length > 0 ? options[activeIndex]?.optionId : undefined;
+  const isExisting = value !== '' && companies.some((company) => company.id === value);
+  const isNew = query.length > 0 && !exact && !open;
+  const listTitle = query ? 'Matching companies' : 'Your companies';
 
   return (
-    <div>
-      <div className="relative">
+    <div style={{ position: 'relative' }}>
+      <label
+        className="field"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          height: '52px',
+          padding: '0 16px',
+          background: 'var(--card)',
+          border: '2px solid var(--ink)',
+          borderRadius: '16px',
+          color: 'var(--ink3)',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
         <input
           ref={inputRef}
           id="companyId"
           name="companyId"
-          className="input"
           role="combobox"
           aria-label="Company"
           aria-expanded={open}
@@ -181,50 +205,128 @@ export function CompanyCombobox({
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+          style={{ flex: '1 1 auto', minWidth: 0, height: '100%', background: 'transparent', border: 0, fontSize: '15px', color: 'var(--ink)' }}
         />
-        {open && options.length > 0 ? (
-          <ul
-            id={listboxId}
-            role="listbox"
-            aria-label="Companies"
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+        {isExisting ? (
+          <span
+            className="pop-now"
+            style={{
+              '--r': '-2deg',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '2px 10px 2px 8px',
+              border: '1.5px solid var(--ink)',
+              borderRadius: '999px',
+              background: 'var(--good)',
+              color: 'var(--ink)',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            } as CSSProperties}
           >
-            {options.map((option, index) => (
-              <li key={option.optionId}>
-                <div
-                  id={option.optionId}
-                  role="option"
-                  aria-selected={index === activeIndex}
-                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
-                    index === activeIndex ? 'bg-brand-50 text-brand-700' : 'text-slate-700'
-                  }`}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    applyOption(option);
-                  }}
-                  onMouseEnter={() => setActiveIndex(index)}
-                >
-                  {option.kind === 'create' ? (
-                    <IconPlus className="h-3.5 w-3.5 text-brand-600" />
-                  ) : (
-                    <IconBuilding className="h-3.5 w-3.5 text-slate-400" />
-                  )}
-                  <span className="truncate">{option.label}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            <span>Saved company</span>
+          </span>
         ) : null}
-      </div>
-      {creating ? <p className="mt-1.5 text-xs text-slate-500">Creating company…</p> : null}
+        {isNew ? (
+          <span
+            className="pop-now"
+            style={{
+              '--r': '2deg',
+              padding: '2px 10px',
+              border: '1.5px solid var(--ink)',
+              borderRadius: '999px',
+              background: 'var(--marker)',
+              color: 'var(--ink)',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            } as CSSProperties}
+          >
+            New company
+          </span>
+        ) : null}
+      </label>
+
+      {open && options.length > 0 ? (
+        <div
+          id={listboxId}
+          className="menu-in"
+          role="listbox"
+          aria-label="Companies"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 'calc(100% + 10px)',
+            zIndex: 20,
+            background: 'var(--card)',
+            border: '2px solid var(--ink)',
+            borderRadius: '18px',
+            boxShadow: '6px 6px 0 var(--ink)',
+            padding: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            maxHeight: '360px',
+            overflow: 'auto',
+          }}
+        >
+          <div style={{ padding: '6px 12px 4px', fontSize: '12.5px', fontWeight: 700, color: 'var(--ink3)' }}>{listTitle}</div>
+          {options.map((option, index) => (
+            <button
+              key={option.optionId}
+              id={option.optionId}
+              type="button"
+              role="option"
+              aria-selected={index === activeIndex}
+              className="opt"
+              onMouseDown={(event) => {
+                event.preventDefault();
+                applyOption(option);
+              }}
+              onMouseEnter={() => setActiveIndex(index)}
+              style={
+                option.kind === 'create'
+                  ? {
+                      height: '48px',
+                      padding: '0 12px',
+                      borderRadius: '12px',
+                      borderTop: '2px dashed var(--line)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      fontWeight: 700,
+                    }
+                  : {
+                      height: '44px',
+                      padding: '0 12px',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      fontWeight: 600,
+                    }
+              }
+            >
+              {option.kind === 'create' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+              )}
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {creating ? <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--ink3)' }}>Creating company…</p> : null}
       {errorMessage ? (
-        <p role="alert" id={errorId} className="mt-1.5 text-xs text-rose-600">
+        <p role="alert" id={errorId} style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--crit)' }}>
           {errorMessage}
         </p>
       ) : null}
-      <p className="mt-2 text-xs text-slate-500">
-        Start typing to filter. A name that does not exist yet can be created inline.
-      </p>
     </div>
   );
 }

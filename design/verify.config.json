@@ -28,6 +28,7 @@
     { "name": "dashboard", "path": "/dashboard", "waitFor": "main >> text=PERSIB Tech", "reference": "design/reference/dashboard.png", "expectAnimations": ["pop", "grow-x", "fade-in", "ping"] },
     { "name": "applications", "path": "/applications", "waitFor": "main >> text=PT Deptech Digital Indonesia", "reference": "design/reference/applications.png", "expectAnimations": ["pop", "drop-in-card", "ping"] },
     { "name": "detail", "path": "/applications/8f14e45f-ceea-4672-9a4c-0a4b2e9c1d11", "waitFor": "main h1:has-text(\"Fullstack Programmer\")", "reference": "design/reference/detail.png", "expectAnimations": ["pop", "drop-in-row", "ping"] },
-    { "name": "form", "path": "/applications/new", "waitFor": "main", "reference": "design/reference/form.png", "expectAnimations": ["pop"] }
+    { "name": "form", "path": "/applications/new", "waitFor": "main >> text=#linkedin", "reference": "design/reference/form.png", "expectAnimations": ["pop"] },
+    { "name": "form-edit", "path": "/applications/8f14e45f-ceea-4672-9a4c-0a4b2e9c1d11/edit", "waitFor": "main >> text=#linkedin", "expectAnimations": ["pop"] }
   ]
 }
