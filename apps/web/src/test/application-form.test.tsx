@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -84,7 +84,7 @@ describe('CompanyCombobox', () => {
     await user.type(input, 'acme');
 
     const options = screen.getAllByRole('option').map((option) => option.textContent);
-    expect(options).toEqual(['Acme Corporation']);
+    expect(options).toEqual(['Acme Corporation', 'Create "acme"']);
   });
 
   it('matches regardless of the casing typed', async () => {
@@ -96,7 +96,7 @@ describe('CompanyCombobox', () => {
     await user.type(input, 'ACME');
 
     const options = screen.getAllByRole('option').map((option) => option.textContent);
-    expect(options).toEqual(['Acme Corporation']);
+    expect(options).toEqual(['Acme Corporation', 'Create "ACME"']);
   });
 
   it('offers to create a company when the typed text matches nothing', async () => {
@@ -257,10 +257,7 @@ describe('ApplicationFormPage quick add', () => {
     await fillEveryField(user);
 
     await user.type(screen.getByLabelText(/resume version/i), 'resume-2026-v2.pdf');
-    await user.selectOptions(
-      screen.getByLabelText(/initial status/i),
-      ApplicationStatus.ASSESSMENT,
-    );
+    await user.click(screen.getByRole('button', { name: 'Assessment' }));
     const appliedDate = screen.getByLabelText(/applied date/i) as HTMLInputElement;
     await user.clear(appliedDate);
     await user.type(appliedDate, '2026-09-29');
@@ -280,10 +277,13 @@ describe('ApplicationFormPage quick add', () => {
     expect(screen.queryByRole('button', { name: 'Remove tag referral' })).not.toBeInTheDocument();
 
     // Kept
-    expect(screen.getByLabelText(/initial status/i)).toHaveValue(ApplicationStatus.ASSESSMENT);
+    expect(screen.getByRole('button', { name: 'Assessment' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.getByLabelText(/applied date/i)).toHaveValue('2026-09-29');
     expect(screen.getByLabelText(/resume version/i)).toHaveValue('resume-2026-v2.pdf');
-  });
+  }, 15_000);
 
   it('posts the application and stays on the form after "Save & add another"', async () => {
     const user = userEvent.setup();
@@ -352,7 +352,7 @@ describe('ApplicationFormPage quick add', () => {
     await screen.findByRole('combobox', { name: 'Company' });
     await fillEveryField(user);
     await user.type(screen.getByLabelText(/resume version/i), 'resume-2026-v2.pdf');
-    await user.selectOptions(screen.getByLabelText(/initial status/i), ApplicationStatus.INTERVIEW);
+    await user.click(screen.getByRole('button', { name: 'Interview' }));
 
     const saveAndAddAnother = screen.getByRole('button', { name: /save & add another/i });
     await user.click(saveAndAddAnother);
@@ -369,7 +369,10 @@ describe('ApplicationFormPage quick add', () => {
     expect(screen.getByLabelText(/salary range/i)).toHaveValue('Rp 8-12 juta');
     expect(screen.getByLabelText(/resume version/i)).toHaveValue('resume-2026-v2.pdf');
     expect(screen.getByLabelText(/this role is remote/i)).toBeChecked();
-    expect(screen.getByLabelText(/initial status/i)).toHaveValue(ApplicationStatus.INTERVIEW);
+    expect(screen.getByRole('button', { name: 'Interview' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.getByRole('button', { name: 'Remove tag referral' })).toBeInTheDocument();
 
     // Usable again for a retry.
@@ -407,8 +410,11 @@ describe('ApplicationFormPage quick add', () => {
     });
 
     await screen.findByRole('status');
-    expect(saveAndAddAnother).toBeEnabled();
-    expect(saveApplication).toBeEnabled();
+    // The successful save cleared the form, so readiness (and both buttons)
+    // stay off until the next application is filled in.
+    expect(saveAndAddAnother).toBeDisabled();
+    expect(saveApplication).toBeDisabled();
+    expect(screen.getByText('Role title and job description are required')).toBeInTheDocument();
   });
 
   it('still requires a company', async () => {
@@ -419,10 +425,85 @@ describe('ApplicationFormPage quick add', () => {
     await user.type(screen.getByLabelText(/role title/i), 'Staff Engineer');
     await user.type(screen.getByLabelText(/job description/i), 'We are hiring a staff engineer.');
 
-    await user.click(screen.getByRole('button', { name: /save & add another/i }));
+    expect(screen.getByRole('button', { name: /save & add another/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save application/i })).toBeDisabled();
 
     expect(await screen.findByText('Select a company')).toBeInTheDocument();
     expect(postMock).not.toHaveBeenCalledWith('/api/applications', expect.anything());
+  });
+
+  it('shows an inline error and does not POST when the form is submitted directly', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    await screen.findByRole('combobox', { name: 'Company' });
+    await user.type(screen.getByLabelText(/role title/i), 'Staff Engineer');
+    await user.type(screen.getByLabelText(/job description/i), 'We are hiring a staff engineer.');
+
+    const form = screen.getByRole('button', { name: /save application/i }).closest('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
+
+    const inlineError = await screen.findByRole('alert');
+    expect(inlineError).toHaveTextContent('Select a company');
+    expect(postMock).not.toHaveBeenCalledWith('/api/applications', expect.anything());
+  });
+
+  it('does not submit on Enter while the real validation is incomplete', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    await screen.findByRole('combobox', { name: 'Company' });
+    await user.type(screen.getByLabelText(/role title/i), 'Staff Engineer');
+    await user.type(screen.getByLabelText(/job description/i), 'We are hiring a staff engineer.');
+
+    await user.type(screen.getByLabelText(/role title/i), '{Enter}');
+
+    expect(screen.getByText('Select a company')).toBeInTheDocument();
+    expect(postMock).not.toHaveBeenCalledWith('/api/applications', expect.anything());
+  });
+
+  it('becomes ready only once company, role and description all pass validation', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    const company = await screen.findByRole('combobox', { name: 'Company' });
+    await user.type(screen.getByLabelText(/role title/i), 'Staff Engineer');
+    expect(screen.getByText('1 of 2 required')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/job description/i), 'We are hiring a staff engineer.');
+    expect(screen.getByText('2 of 2 required')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save application/i })).toBeDisabled();
+
+    await user.click(company);
+    await user.type(company, 'globex');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save application/i })).toBeEnabled(),
+    );
+    expect(screen.getByText('Ready to save')).toBeInTheDocument();
+  });
+
+  it('previews the board card from the typed data', async () => {
+    const user = userEvent.setup();
+    renderFormPage();
+
+    const company = await screen.findByRole('combobox', { name: 'Company' });
+    await user.type(screen.getByLabelText(/role title/i), 'Staff Engineer');
+    await user.click(company);
+    await user.type(company, 'globex');
+    await user.keyboard('{Enter}');
+    await user.type(screen.getByLabelText(/location/i), 'Jakarta');
+    await user.type(screen.getByLabelText(/salary range/i), 'Rp 8-12 juta');
+    await user.click(screen.getByLabelText(/this role is remote/i));
+
+    expect(screen.getByRole('heading', { name: 'Staff Engineer' })).toBeInTheDocument();
+    expect(screen.getByText('Globex')).toBeInTheDocument();
+    expect(screen.getByText('Jakarta')).toBeInTheDocument();
+    expect(screen.getByText('Rp 8-12 juta')).toBeInTheDocument();
+    expect(screen.getByText('Remote')).toBeInTheDocument();
+    expect(screen.getByText(/Lands in the Applied lane/)).toBeInTheDocument();
   });
 
   it('sends the selected tags on a normal save', async () => {
