@@ -1,91 +1,110 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 import { useTags } from '../hooks/useTags';
-import { TagChip } from './TagChip';
-import { IconPlus } from './Icons';
+
+function normalizeTag(value: string): string {
+  return value
+    .trim()
+    .replace(/^#+/, '')
+    .toLowerCase()
+    .replace(/\s+/g, '-');
+}
 
 export function TagInput({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
   const { data: existingTags = [] } = useTags();
   const [draft, setDraft] = useState('');
-  const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const normalized = draft.trim().toLowerCase();
-  const suggestions = useMemo(() => {
-    if (!normalized) return [];
-    return existingTags
-      .map((tag) => tag.name)
-      .filter((name) => name.toLowerCase().includes(normalized) && !value.includes(name))
-      .slice(0, 6);
-  }, [existingTags, normalized, value]);
+  const names = useMemo(() => {
+    const fromServer = existingTags.map((tag) => tag.name);
+    const extras = value.filter((name) => !fromServer.includes(name));
+    return [...fromServer, ...extras];
+  }, [existingTags, value]);
 
   const addTag = (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    if (!value.includes(trimmed) && value.length < 30) {
-      onChange([...value, trimmed]);
+    const normalized = normalizeTag(name);
+    if (!normalized) return;
+    if (!value.includes(normalized) && value.length < 30) {
+      onChange([...value, normalized]);
     }
     setDraft('');
+  };
+
+  const toggle = (name: string) => {
+    if (value.includes(name)) {
+      onChange(value.filter((existing) => existing !== name));
+      return;
+    }
+    if (value.length < 30) onChange([...value, name]);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
-      if (suggestions.length > 0) {
-        addTag(suggestions[0] as string);
-      } else {
-        addTag(draft);
-      }
+      addTag(draft);
     } else if (event.key === 'Backspace' && draft === '' && value.length > 0) {
       onChange(value.slice(0, -1));
     }
   };
 
   return (
-    <div>
-      {value.length > 0 ? (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {value.map((tag) => (
-            <TagChip
-              key={tag}
-              name={tag}
-              onRemove={() => onChange(value.filter((existing) => existing !== tag))}
-            />
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {names.length > 0 ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {names.map((name) => {
+            const on = value.includes(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                className="stg chip-in"
+                aria-pressed={on}
+                aria-label={on ? `Remove tag ${name}` : undefined}
+                onClick={() => toggle(name)}
+                style={
+                  {
+                    height: '36px',
+                    padding: '0 12px 0 14px',
+                    borderRadius: '18px',
+                    border: on ? '2px solid var(--ink)' : '2px dashed var(--ink3)',
+                    background: on ? 'var(--ink)' : 'var(--card)',
+                    color: on ? 'var(--card)' : 'var(--ink2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                  } as CSSProperties
+                }
+              >
+                <span>#{name}</span>
+                {on ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       ) : null}
-      <div className="relative">
+      <label
+        className="field tagfield"
+        style={{
+          height: '42px',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          border: '2px dashed var(--ink3)',
+          borderRadius: '21px',
+        }}
+      >
         <input
-          ref={inputRef}
-          className="input"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 120)}
-          placeholder="Type a tag and press Enter (e.g. referral, priority)"
+          placeholder="Type a tag and press Enter"
           aria-label="Add tag"
+          style={{ width: '100%', height: '100%', background: 'transparent', border: 0, fontSize: '14px', color: 'var(--ink)' }}
         />
-        {focused && suggestions.length > 0 ? (
-          <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-            {suggestions.map((name) => (
-              <li key={name}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    addTag(name);
-                  }}
-                >
-                  <IconPlus className="h-3.5 w-3.5 text-slate-400" />
-                  {name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+      </label>
     </div>
   );
 }

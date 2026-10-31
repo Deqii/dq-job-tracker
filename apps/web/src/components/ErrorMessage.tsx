@@ -1,3 +1,4 @@
+// TODO(legacy): the alert still uses the pre-redesign Tailwind palette; not drawn in the mockup.
 import { IconAlert } from './Icons';
 
 export function ErrorMessage({ message, className = '' }: { message: string; className?: string }) {

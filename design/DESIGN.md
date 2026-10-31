@@ -34,3 +34,4 @@ Sample data in the mockups (the user name "Tio", counts, dates) must be replaced
 
 ## Done means
 `npm run design:check` and `npm run verify:design` print PASS (a SKIP column was not checked and counts as not verified), the real output is pasted in the final message, and the maintainer has compared the route with the mockup by eye. Never write that a page "matches the mockup".
+Exception: B-Detail line 197 (salary highlighter linear-gradient) and line 325 (Assessment color-mix) are copied verbatim from the mockup.

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildApplicationsQuery } from '../hooks/useApplications';
-import { emptyCounts, responseRateOf } from '../hooks/useDashboard';
+import { emptyCounts, interviewRateOf, responseRateOf, tapeCountsOf } from '../hooks/useDashboard';
 import { formatDate, formatPercent, parseDateInput, timeAgo, toISODateInput } from '../lib/utils';
 import { emptyToUndefined } from '../schemas';
 import { ApplicationStatus } from '../types';
@@ -58,16 +58,58 @@ describe('formatPercent', () => {
 });
 
 describe('responseRateOf', () => {
-  it('counts interview and offer stages as responses', () => {
+  it('counts any answer, including assessment and rejection', () => {
     const counts = emptyCounts();
-    counts[ApplicationStatus.APPLIED] = 8;
+    counts[ApplicationStatus.APPLIED] = 6;
+    counts[ApplicationStatus.ASSESSMENT] = 1;
     counts[ApplicationStatus.INTERVIEW] = 1;
     counts[ApplicationStatus.OFFER] = 1;
-    expect(responseRateOf(counts, 10)).toBe(20);
+    counts[ApplicationStatus.REJECTED] = 1;
+    expect(responseRateOf(counts, 10)).toBe(40);
   });
 
   it('returns null when there is nothing to measure', () => {
     expect(responseRateOf(emptyCounts(), 0)).toBeNull();
+  });
+});
+
+describe('interviewRateOf', () => {
+  it('counts only interview and offer stages', () => {
+    const counts = emptyCounts();
+    counts[ApplicationStatus.APPLIED] = 6;
+    counts[ApplicationStatus.ASSESSMENT] = 1;
+    counts[ApplicationStatus.INTERVIEW] = 1;
+    counts[ApplicationStatus.OFFER] = 1;
+    counts[ApplicationStatus.REJECTED] = 1;
+    expect(interviewRateOf(counts, 10)).toBe(20);
+  });
+
+  it('returns null when there is nothing to measure', () => {
+    expect(interviewRateOf(emptyCounts(), 0)).toBeNull();
+  });
+});
+
+describe('tapeCountsOf', () => {
+  it('keeps the real counts at or below the cap', () => {
+    const counts = emptyCounts();
+    counts[ApplicationStatus.APPLIED] = 100;
+    counts[ApplicationStatus.INTERVIEW] = 20;
+    expect(tapeCountsOf(counts)).toEqual(counts);
+  });
+
+  it('scales each status when the total exceeds the cap, with a minimum of one', () => {
+    const counts = emptyCounts();
+    counts[ApplicationStatus.APPLIED] = 100;
+    counts[ApplicationStatus.INTERVIEW] = 20;
+    counts[ApplicationStatus.REJECTED] = 5;
+    counts[ApplicationStatus.WISHLIST] = 1;
+    const scaled = tapeCountsOf(counts);
+
+    expect(Object.values(scaled).reduce((sum, count) => sum + count, 0)).toBe(120);
+    expect(scaled[ApplicationStatus.APPLIED]).toBe(95);
+    expect(scaled[ApplicationStatus.INTERVIEW]).toBe(19);
+    expect(scaled[ApplicationStatus.REJECTED]).toBe(5);
+    expect(scaled[ApplicationStatus.WISHLIST]).toBe(1);
   });
 });
 

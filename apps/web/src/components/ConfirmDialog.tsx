@@ -1,3 +1,4 @@
+// TODO(legacy): the dialog still uses the pre-redesign Tailwind palette; not drawn in the mockup.
 import { useState } from 'react';
 
 import { getErrorMessage } from '../lib/api';
