@@ -6,10 +6,10 @@ Unlike a spreadsheet or a folder of links, each application is a persistent reco
 
 ## Screenshots
 
-![Dashboard](docs/screenshots/dashboard.png)
-![Applications list](docs/screenshots/applications.png)
-![Application detail](docs/screenshots/application-detail.png)
-![Log an application](docs/screenshots/log-application.png)
+![Dashboard](docs/screenshots/dashboard-v2.png)
+![Applications list](docs/screenshots/applications-v2.png)
+![Application detail](docs/screenshots/application-detail-v2.png)
+![Log an application](docs/screenshots/log-application-v2.png)
 
 ## Features
 
